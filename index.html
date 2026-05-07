@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>115學年度 時尚造形系 校外實習志願序查詢</title>
+<style>
+  :root {
+    --primary: #6c3fa0;
+    --primary-light: #9b6cc8;
+    --primary-bg: #f5f0fb;
+    --accent: #e8a0d0;
+    --text: #2d2d2d;
+    --muted: #777;
+    --border: #ddd;
+    --card: #fff;
+    --badge-1: #e74c8b;
+    --badge-2: #3b82f6;
+    --badge-3: #10b981;
+    --shadow: 0 2px 12px rgba(108,63,160,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background: var(--primary-bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff;
+    padding: 28px 24px 20px;
+    text-align: center;
+  }
+  header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.05em; }
+  header p  { font-size: 0.85rem; opacity: 0.85; margin-top: 6px; }
+  .stats-bar {
+    display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 5px 14px; font-size: 0.8rem; backdrop-filter: blur(4px);
+  }
+
+  /* ── Main layout ── */
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 40px; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 9px 20px; border-radius: 24px; border: 2px solid var(--primary);
+    background: #fff; color: var(--primary); cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: all .2s;
+  }
+  .tab-btn:hover { background: var(--primary-bg); }
+  .tab-btn.active { background: var(--primary); color: #fff; }
+
+  /* ── Cards / panels ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--card); border-radius: 14px;
+    box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 1.05rem; color: var(--primary);
+    margin-bottom: 16px; border-left: 4px solid var(--primary);
+    padding-left: 10px;
+  }
+
+  /* ── Search box ── */
+  .search-wrap {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .search-wrap input, .search-wrap select {
+    padding: 10px 14px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 0.9rem; outline: none;
+    transition: border .2s;
+  }
+  .search-wrap input:focus, .search-wrap select:focus {
+    border-color: var(--primary);
+  }
+  .search-wrap input { flex: 1; min-width: 180px; }
+  .btn-search {
+    padding: 10px 22px; background: var(--primary); color: #fff;
+    border: none; border-radius: 8px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: background .2s;
+  }
+  .btn-search:hover { background: var(--primary-light); }
+
+  /* ── Student card result ── */
+  #student-result .empty { color: var(--muted); text-align: center; padding: 30px; }
+  .student-card {
+    border: 2px solid var(--primary-bg); border-radius: 12px;
+    overflow: hidden;
+  }
+  .s-header {
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff; padding: 16px 20px; display: flex;
+    justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  }
+  .s-name { font-size: 1.2rem; font-weight: 700; }
+  .s-meta { font-size: 0.82rem; opacity: 0.85; }
+  .wishes {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px; padding: 16px;
+  }
+  .wish-item {
+    border-radius: 10px; padding: 14px 16px;
+    border-left: 5px solid;
+  }
+  .wish-item.w1 { background: #fdf0f5; border-color: var(--badge-1); }
+  .wish-item.w2 { background: #eff6ff; border-color: var(--badge-2); }
+  .wish-item.w3 { background: #ecfdf5; border-color: var(--badge-3); }
+  .wish-label {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .wish-item.w1 .wish-label { color: var(--badge-1); }
+  .wish-item.w2 .wish-label { color: var(--badge-2); }
+  .wish-item.w3 .wish-label { color: var(--badge-3); }
+  .wish-name { font-size: 0.95rem; font-weight: 600; }
+  .wish-count {
+    font-size: 0.78rem; color: var(--muted); margin-top: 4px;
+  }
+  .wish-count span { font-weight: 700; color: var(--primary); }
+
+  /* ── Company table ── */
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-row input, .filter-row select {
+    padding: 8px 12px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 0.87rem; outline: none;
+    transition: border .2s;
+  }
+  .filter-row input:focus, .filter-row select:focus { border-color: var(--primary); }
+  .filter-row input { flex: 1; min-width: 160px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--primary); color: #fff;
+    padding: 10px 12px; text-align: left; font-size: 0.85rem;
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  th:hover { background: var(--primary-light); }
+  th .sort-icon { margin-left: 4px; opacity: 0.7; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.87rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--primary-bg); }
+  .badge {
+    display: inline-block; border-radius: 12px; padding: 2px 9px;
+    font-size: 0.75rem; font-weight: 700; margin: 1px;
+  }
+  .b1 { background: #fde8f0; color: var(--badge-1); }
+  .b2 { background: #dbeafe; color: var(--badge-2); }
+  .b3 { background: #d1fae5; color: var(--badge-3); }
+  .total-badge {
+    display: inline-block; background: var(--primary); color: #fff;
+    border-radius: 10px; padding: 1px 8px; font-size: 0.78rem; font-weight: 700;
+  }
+
+  /* ── All students table ── */
+  .class-toggle { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .ct-btn {
+    padding: 7px 16px; border-radius: 20px; border: 2px solid var(--border);
+    background: #fff; color: var(--muted); cursor: pointer;
+    font-size: 0.85rem; transition: all .2s;
+  }
+  .ct-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+
+  /* ── Bar chart ── */
+  .chart-wrap { overflow-x: auto; }
+  .bar-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    min-height: 28px;
+  }
+  .bar-label {
+    width: 220px; font-size: 0.78rem; text-align: right;
+    flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bar-track {
+    flex: 1; background: #eee; border-radius: 6px; height: 20px;
+    overflow: hidden; min-width: 80px;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 6px; transition: width .4s;
+    display: flex; align-items: center; padding-left: 6px;
+  }
+  .bar-fill.c1 { background: linear-gradient(90deg, var(--badge-1), #f78fb3); }
+  .bar-fill.c2 { background: linear-gradient(90deg, var(--badge-2), #60a5fa); }
+  .bar-fill.c3 { background: linear-gradient(90deg, var(--badge-3), #34d399); }
+  .bar-fill.ca { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
+  .bar-num { font-size: 0.75rem; font-weight: 700; color: #fff; }
+  .bar-total-num {
+    font-size: 0.78rem; font-weight: 700; color: var(--primary); min-width: 24px;
+  }
+
+  /* ── duplicate notice ── */
+  .notice {
+    background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 0.83rem; color: #7d5a00;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .bar-label { width: 130px; }
+    header h1 { font-size: 1.1rem; }
+    .s-name { font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎓 115學年度 時尚造形系 校外實習志願序查詢系統</h1>
+  <p>臺北城市科技大學 時尚造型事業系 · 資料截止日：2026-05-05</p>
+  <div class="stats-bar">
+    <span class="stat-pill" id="st-total">載入中…</span>
+    <span class="stat-pill" id="st-companies">廠商數</span>
+    <span class="stat-pill" id="st-classes">班級數</span>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('search')">🔍 學生查詢</button>
+    <button class="tab-btn" onclick="switchTab('company')">🏢 廠商競爭統計</button>
+    <button class="tab-btn" onclick="switchTab('all')">📋 全班志願總覽</button>
+    <button class="tab-btn" onclick="switchTab('chart')">📊 志願排行圖表</button>
+  </div>
+
+  <!-- ────── Tab 1: 學生查詢 ────── -->
+  <div id="panel-search" class="panel active">
+    <div class="card">
+      <h2>依學生姓名或學號查詢志願序</h2>
+      <div class="search-wrap">
+        <input type="text" id="q-name" placeholder="輸入姓名或學號…" oninput="liveSearch()" />
+        <select id="q-class" onchange="liveSearch()">
+          <option value="">所有班級</option>
+          <option value="時尚三真">時尚三真</option>
+          <option value="時尚三善">時尚三善</option>
+        </select>
+        <button class="btn-search" onclick="liveSearch()">查詢</button>
+      </div>
+      <div id="student-result"><p class="empty">請輸入姓名或學號開始查詢</p></div>
+    </div>
+  </div>
+
+  <!-- ────── Tab 2: 廠商競爭統計 ────── -->
+  <div id="panel-company" class="panel">
+    <div class="card">
+      <h2>各廠商志願競爭人數統計</h2>
+      <div class="filter-row">
+        <input type="text" id="f-company" placeholder="搜尋廠商名稱…" oninput="renderCompanyTable()" />
+        <select id="f-sort" onchange="renderCompanyTable()">
+          <option value="total">依總人數排序</option>
+          <option value="w1">依第一志願排序</option>
+          <option value="w2">依第二志願排序</option>
+          <option value="w3">依第三志願排序</option>
+          <option value="name">依名稱排序</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="company-table">
+          <thead>
+            <tr>
+              <th>廠商名稱</th>
+              <th>第一志願</th>
+              <th>第二志願</th>
+              <th>第三志願</th>
+              <th>志願合計</th>
+              <th>選填學生</th>
+            </tr>
+          </thead>
+          <tbody id="company-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────── Tab 3: 全班志願總覽 ────── -->
+  <div id="panel-all" class="panel">
+    <div class="card">
+      <h2>全班學生志願序總覽</h2>
+      <div class="class-toggle">
+        <button class="ct-btn active" data-cls="all" onclick="filterAll(this)">全部</button>
+        <button class="ct-btn" data-cls="時尚三真" onclick="filterAll(this)">時尚三真</button>
+        <button class="ct-btn" data-cls="時尚三善" onclick="filterAll(this)">時尚三善</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="all-table">
+          <thead>
+            <tr>
+              <th>班級</th>
+              <th>學號</th>
+              <th>姓名</th>
+              <th>第一志願</th>
+              <th>第二志願</th>
+              <th>第三志願</th>
+            </tr>
+          </thead>
+          <tbody id="all-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────── Tab 4: 圖表 ────── -->
+  <div id="panel-chart" class="panel">
+    <div class="card">
+      <h2>各廠商志願人數排行（前 30 名）</h2>
+      <div class="filter-row">
+        <select id="chart-mode" onchange="renderChart()">
+          <option value="total">合計人數</option>
+          <option value="w1">第一志願人數</option>
+          <option value="w2">第二志願人數</option>
+          <option value="w3">第三志願人數</option>
+        </select>
+        <select id="chart-class" onchange="renderChart()">
+          <option value="all">全部班級</option>
+          <option value="時尚三真">時尚三真</option>
+          <option value="時尚三善">時尚三善</option>
+        </select>
+      </div>
+      <div class="chart-wrap" id="chart-area"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ════════════════════════════════════════════════════
+//  資料 — 從 Excel 讀取後嵌入
+// ════════════════════════════════════════════════════
+const RAW = [{"timestamp":"2026-05-04 11:22","class":"時尚三善","id":"41207206","name":"文思涵","wish1":"芙美玉貴人美醫集團","wish2":"ViviDay美甲美睫","wish3":"維格醫美集團"},{"timestamp":"2026-05-03 20:53","class":"時尚三真","id":"41207157","name":"王心妤","wish1":"群翊商行","wish2":"一真為你攝影有限公司","wish3":"唯逗國際有限公司"},{"timestamp":"2026-04-23 14:04","class":"時尚三真","id":"41207130","name":"王君文","wish1":"The Vale.Finest（最丘髮型有限公司）","wish2":"群翊商行","wish3":"Round2（朗貳集團）"},{"timestamp":"2026-04-30 22:25","class":"時尚三真","id":"41207158","name":"王慧娜","wish1":"一真為你攝影有限公司","wish2":"ViviDay美甲美睫","wish3":"伊林娛樂"},{"timestamp":"2026-04-30 14:08","class":"時尚三真","id":"41207117","name":"朱孟涵","wish1":"麗舍時尚婚紗","wish2":"一真為你攝影有限公司","wish3":"麗舍時尚婚紗"},{"timestamp":"2026-05-03 20:55","class":"時尚三善","id":"41207241","name":"何宜玲","wish1":"台灣屈臣氏股份有限公司","wish2":"統一生活事業股份有限公司","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-05-01 01:44","class":"時尚三善","id":"41207249","name":"余柔萱","wish1":"曜胜生技股份有限公司","wish2":"費思特國際美容有限公司","wish3":"斯曼特企業股份有限公司"},{"timestamp":"2026-04-30 23:50","class":"時尚三善","id":"41207208","name":"余婕安","wish1":"伊林娛樂","wish2":"SHISEIDO 資生堂（華資妝業公司）","wish3":"伊林娛樂"},{"timestamp":"2026-05-03 20:13","class":"時尚三善","id":"41207201","name":"吳沛恩","wish1":"斯曼特企業股份有限公司","wish2":"台灣施舒雅股份有限公司","wish3":"斯曼特企業股份有限公司"},{"timestamp":"2026-05-01 08:39","class":"時尚三真","id":"41207148","name":"吳佳芯","wish1":"光澤彤顏醫美診所","wish2":"映忠孝美髮造型社","wish3":"統一生活事業股份有限公司"},{"timestamp":"2026-04-30 14:01","class":"時尚三真","id":"41207118","name":"吳奕瑩","wish1":"曼哈頓股份有限公司（CHWedding）賈永婕婚紗","wish2":"麗舍時尚婚紗","wish3":"曼哈頓股份有限公司（CHWedding）賈永婕婚紗"},{"timestamp":"2026-05-02 13:08","class":"時尚三善","id":"41207236","name":"吳庭樂","wish1":"捌羚設計有限公司","wish2":"Round2（朗貳集團）","wish3":"The Vale.Finest（最丘髮型有限公司）"},{"timestamp":"2026-05-01 00:19","class":"時尚三善","id":"41207210","name":"呂安妤","wish1":"MAKE UP FOR EVER（法華香水公司）","wish2":"Dior（法華香水公司）","wish3":"新光三越百貨股份有限公司"},{"timestamp":"2026-05-01 12:08","class":"時尚三真","id":"41207164","name":"李立如","wish1":"聖宜醫美集團","wish2":"東森得易購股份有限公司","wish3":"登琪爾股份有限公司"},{"timestamp":"2026-05-01 01:07","class":"時尚三善","id":"41207250","name":"李佳羽","wish1":"台灣施舒雅股份有限公司","wish2":"維格醫美集團","wish3":"君綺生醫股份有限公司"},{"timestamp":"2026-04-30 14:07","class":"時尚三真","id":"41207121","name":"李佳臻","wish1":"聖宜醫美集團","wish2":"君綺生醫股份有限公司","wish3":"光澤彤顏醫美診所"},{"timestamp":"2026-04-29 18:50","class":"時尚三真","id":"41207113","name":"李昀珊","wish1":"新光三越百貨股份有限公司","wish2":"The Vale.Finest（最丘髮型有限公司）","wish3":"Dior（法華香水公司）"},{"timestamp":"2026-04-23 19:24","class":"時尚三真","id":"41207162","name":"李洋伶","wish1":"香港商希思黎有限公司台灣分公司","wish2":"斯曼特企業股份有限公司","wish3":"唯逗國際有限公司"},{"timestamp":"2026-04-30 04:23","class":"時尚三真","id":"41207159","name":"李家華","wish1":"太平洋崇光百貨股份有限公司","wish2":"群翊商行","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-05-01 09:42","class":"時尚三真","id":"41207144","name":"李婕妤","wish1":"台灣施舒雅股份有限公司","wish2":"晶緻醫美集團","wish3":"唯逗國際有限公司"},{"timestamp":"2026-04-30 22:45","class":"時尚三善","id":"41207243","name":"李穎婕","wish1":"斯曼特企業股份有限公司","wish2":"唯逗國際有限公司","wish3":"東森得易購股份有限公司"},{"timestamp":"2026-04-30 16:06","class":"時尚三真","id":"41207146","name":"沈佩芸","wish1":"君綺生醫股份有限公司","wish2":"光澤彤顏醫美診所","wish3":"新光三越百貨股份有限公司"},{"timestamp":"2026-04-30 22:47","class":"時尚三善","id":"41207240","name":"沈昱萱","wish1":"登琪爾股份有限公司","wish2":"斯曼特企業股份有限公司","wish3":"東森得易購股份有限公司"},{"timestamp":"2026-04-30 16:03","class":"時尚三真","id":"41207134","name":"卓暐馨","wish1":"君綺生醫股份有限公司","wish2":"光澤彤顏醫美診所","wish3":"Dior（法華香水公司）"},{"timestamp":"2026-05-04 12:15","class":"時尚三真","id":"41207149","name":"周裔葳","wish1":"MAKE UP FOR EVER（法華香水公司）","wish2":"台灣施舒雅股份有限公司","wish3":"一真為你攝影有限公司"},{"timestamp":"2026-04-30 14:11","class":"時尚三真","id":"41207140","name":"林可涵","wish1":"聖宜醫美集團","wish2":"君綺生醫股份有限公司","wish3":"光澤彤顏醫美診所"},{"timestamp":"2026-04-30 12:57","class":"時尚三真","id":"41207109","name":"林芳婷","wish1":"梵莎爾企業股份有限公司","wish2":"唯逗國際有限公司","wish3":"黛寶拉股份有限公司"},{"timestamp":"2026-04-30 23:25","class":"時尚三真","id":"41207112","name":"林采穎","wish1":"黛寶拉股份有限公司","wish2":"東森得易購股份有限公司","wish3":"台灣施舒雅股份有限公司"},{"timestamp":"2026-05-04 13:39","class":"時尚三善","id":"41207255","name":"林范信婕","wish1":"其他（免實習或海外實習）","wish2":"其他（免實習或海外實習）","wish3":"其他（免實習或海外實習）"},{"timestamp":"2026-04-30 15:28","class":"時尚三善","id":"41207211","name":"林郁芯","wish1":"佐登妮絲國際股份有限公司","wish2":"登琪爾股份有限公司","wish3":"斯曼特企業股份有限公司"},{"timestamp":"2026-04-30 11:45","class":"時尚三真","id":"41207126","name":"林偉哲","wish1":"Dior（法華香水公司）","wish2":"LUXASIA 盧亞股份有限公司","wish3":"Guerlain、Benefit（法華香水公司）"},{"timestamp":"2026-04-29 19:15","class":"時尚三真","id":"41207163","name":"林嘉萱","wish1":"台灣施舒雅股份有限公司","wish2":"愛德利亞台灣股份有限公司","wish3":"唯逗國際有限公司"},{"timestamp":"2026-04-30 13:09","class":"時尚三真","id":"41207145","name":"邱羿蓁","wish1":"一真為你攝影有限公司","wish2":"一真為你攝影有限公司","wish3":"麗舍時尚婚紗"},{"timestamp":"2026-05-03 20:17","class":"時尚三善","id":"41207235","name":"施妤安","wish1":"其他（免實習或海外實習）","wish2":"其他（免實習或海外實習）","wish3":"其他（免實習或海外實習）"},{"timestamp":"2026-05-04 12:27","class":"時尚三善","id":"41207235","name":"施妤安（重複填寫）","wish1":"其他（免實習或海外實習）","wish2":"其他（免實習或海外實習）","wish3":"其他（免實習或海外實習）"},{"timestamp":"2026-04-28 12:32","class":"時尚三善","id":"41207209","name":"施雅馨","wish1":"The Vale.Finest（最丘髮型有限公司）","wish2":"The Vale.Finest（最丘髮型有限公司）","wish3":"The Vale.Finest（最丘髮型有限公司）"},{"timestamp":"2026-04-25 22:11","class":"時尚三善","id":"41207219","name":"范采誼","wish1":"台灣施舒雅股份有限公司","wish2":"台灣施舒雅股份有限公司","wish3":"唯逗國際有限公司"},{"timestamp":"2026-05-03 18:56","class":"時尚三真","id":"41207123","name":"高梓芸","wish1":"Round2（朗貳集團）","wish2":"其他（免實習或海外實習）","wish3":"其他（免實習或海外實習）"},{"timestamp":"2026-04-30 11:11","class":"時尚三真","id":"41207125","name":"張雅淇","wish1":"Dior（法華香水公司）","wish2":"MAKE UP FOR EVER（法華香水公司）","wish3":"新光三越百貨股份有限公司"},{"timestamp":"2026-04-24 01:11","class":"時尚三真","id":"41207132","name":"曹芷涵","wish1":"維格醫美集團","wish2":"聖宜醫美集團","wish3":"Dior（法華香水公司）"},{"timestamp":"2026-04-30 13:36","class":"時尚三真","id":"41207106","name":"梁予瑄","wish1":"其他（免實習或海外實習）","wish2":"其他（免實習或海外實習）","wish3":"其他（免實習或海外實習）"},{"timestamp":"2026-04-30 21:16","class":"時尚三真","id":"41207147","name":"梁瑀瑄","wish1":"其他（免實習或海外實習）","wish2":"其他（免實習或海外實習）","wish3":"聖宜醫美集團"},{"timestamp":"2026-04-30 18:26","class":"時尚三善","id":"41207234","name":"許庭瑜","wish1":"黛寶拉股份有限公司","wish2":"唯逗國際有限公司","wish3":"台灣施舒雅股份有限公司"},{"timestamp":"2026-04-30 18:10","class":"時尚三善","id":"41207248","name":"許配慈","wish1":"ViviDay美甲美睫","wish2":"維格醫美集團","wish3":"晶緻醫美集團"},{"timestamp":"2026-05-04 12:05","class":"時尚三善","id":"41207268","name":"許菀芳","wish1":"捌羚設計有限公司","wish2":"倪萱有限公司","wish3":"The Vale.Finest（最丘髮型有限公司）"},{"timestamp":"2026-05-01 22:17","class":"時尚三真","id":"41207124","name":"許誌軒","wish1":"Dior（法華香水公司）","wish2":"MAKE UP FOR EVER（法華香水公司）","wish3":"Guerlain、Benefit（法華香水公司）"},{"timestamp":"2026-05-01 12:40","class":"時尚三真","id":"41107115","name":"連珮妡","wish1":"十一髮廊 Onze hair","wish2":"快樂麗康股份有限公司","wish3":"台灣施舒雅股份有限公司"},{"timestamp":"2026-05-03 17:21","class":"時尚三善","id":"41207266","name":"陳宇柔","wish1":"統一生活事業股份有限公司","wish2":"台灣屈臣氏股份有限公司","wish3":"統一生活事業股份有限公司"},{"timestamp":"2026-05-04 06:48","class":"時尚三善","id":"41207244","name":"陳沛妤","wish1":"新光三越百貨股份有限公司","wish2":"MAKE UP FOR EVER（法華香水公司）","wish3":"Dior（法華香水公司）"},{"timestamp":"2026-05-01 03:31","class":"時尚三真","id":"41207154","name":"陳昕澦","wish1":"太平洋崇光百貨股份有限公司","wish2":"群翊商行","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-04-29 22:41","class":"時尚三真","id":"41207131","name":"陳芷婍","wish1":"Dior（法華香水公司）","wish2":"愛茉莉太平洋股份有限公司","wish3":"太平洋崇光百貨股份有限公司"},{"timestamp":"2026-04-23 13:32","class":"時尚三真","id":"41207104","name":"陳昱如","wish1":"台灣屈臣氏股份有限公司","wish2":"登琪爾股份有限公司","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-04-30 23:42","class":"時尚三真","id":"41207116","name":"陳智惠","wish1":"黛寶拉股份有限公司","wish2":"東森得易購股份有限公司","wish3":"東森得易購股份有限公司"},{"timestamp":"2026-05-01 09:09","class":"時尚三善","id":"41207224","name":"陳語昕","wish1":"光澤彤顏醫美診所","wish2":"君綺生醫股份有限公司","wish3":"光澤彤顏醫美診所"},{"timestamp":"2026-04-30 23:32","class":"時尚三真","id":"41207136","name":"陳螢岑","wish1":"The Vale.Finest（最丘髮型有限公司）","wish2":"群翊商行","wish3":"捌羚設計有限公司"},{"timestamp":"2026-04-30 16:04","class":"時尚三真","id":"41207137","name":"曾于芯","wish1":"君綺生醫股份有限公司","wish2":"光澤彤顏醫美診所","wish3":"新光三越百貨股份有限公司"},{"timestamp":"2026-05-01 13:39","class":"時尚三善","id":"41207260","name":"游之綾","wish1":"新光三越百貨股份有限公司","wish2":"MAKE UP FOR EVER（法華香水公司）","wish3":"Dior（法華香水公司）"},{"timestamp":"2026-04-30 15:11","class":"時尚三真","id":"41207160","name":"游愛如","wish1":"一真為你攝影有限公司","wish2":"麗舍時尚婚紗","wish3":"法國巨星婚紗"},{"timestamp":"2026-04-30 20:15","class":"時尚三真","id":"41207138","name":"黃于晏","wish1":"晶緻醫美集團","wish2":"君綺生醫股份有限公司","wish3":"光澤彤顏醫美診所"},{"timestamp":"2026-04-30 13:27","class":"時尚三真","id":"41207119","name":"黃宣諭","wish1":"維格醫美集團","wish2":"維格醫美集團","wish3":"晶緻醫美集團"},{"timestamp":"2026-04-23 15:10","class":"時尚三善","id":"41207254","name":"黃榆庭","wish1":"唯逗國際有限公司","wish2":"統一生活事業股份有限公司","wish3":"黛寶拉股份有限公司"},{"timestamp":"2026-04-23 23:18","class":"時尚三真","id":"41207129","name":"黃譯葶","wish1":"The Vale.Finest（最丘髮型有限公司）","wish2":"曼哈頓股份有限公司（CHWedding）","wish3":"伊林娛樂"},{"timestamp":"2026-04-30 12:38","class":"時尚三真","id":"41207139","name":"楊于昀","wish1":"Dior（法華香水公司）","wish2":"伊林娛樂","wish3":"MAKE UP FOR EVER（法華香水公司）"},{"timestamp":"2026-04-29 13:58","class":"時尚三善","id":"41207264","name":"葉芷妤","wish1":"曼哈頓股份有限公司（CHWedding）","wish2":"麗舍時尚婚紗","wish3":"法國巨星婚紗"},{"timestamp":"2026-05-01 01:01","class":"時尚三真","id":"41207127","name":"葉俊佐","wish1":"太平洋崇光百貨股份有限公司","wish2":"統一生活事業股份有限公司","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-04-30 13:23","class":"時尚三真","id":"41210155","name":"葉昭妡","wish1":"其他（免實習或海外實習）","wish2":"MAKE UP FOR EVER（法華香水公司）","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-05-01 03:11","class":"時尚三善","id":"41207218","name":"葉哲綸","wish1":"其他（免實習或海外實習）","wish2":"Dior（法華香水公司）","wish3":"MAKE UP FOR EVER（法華香水公司）"},{"timestamp":"2026-05-01 17:07","class":"時尚三真","id":"412107155","name":"葉瀞涵","wish1":"一真為你攝影有限公司","wish2":"概念整合行銷有限公司","wish3":"愛茉莉太平洋股份有限公司"},{"timestamp":"2026-05-03 18:10","class":"時尚三善","id":"41207242","name":"董松澄","wish1":"台灣屈臣氏股份有限公司","wish2":"統一生活事業股份有限公司","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-05-01 01:46","class":"時尚三善","id":"10414721","name":"詹幃丞","wish1":"Dior（法華香水公司）","wish2":"香港商希思黎有限公司台灣分公司","wish3":"新光三越百貨股份有限公司"},{"timestamp":"2026-05-01 11:57","class":"時尚三真","id":"41207120","name":"廖恩齊","wish1":"唯逗國際有限公司","wish2":"群翊商行","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-05-03 18:28","class":"時尚三善","id":"41207231","name":"劉呈訓","wish1":"其他（免實習或海外實習）","wish2":"黑鵝摩沙有限公司","wish3":"Dior（法華香水公司）"},{"timestamp":"2026-04-30 22:19","class":"時尚三真","id":"41207110","name":"劉怡婷","wish1":"君綺生醫股份有限公司","wish2":"MAKE UP FOR EVER（法華香水公司）","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-04-24 12:56","class":"時尚三善","id":"41207215","name":"劉采昕","wish1":"Dior（法華香水公司）","wish2":"香港商希思黎有限公司台灣分公司","wish3":"君綺生醫股份有限公司"},{"timestamp":"2026-04-30 19:33","class":"時尚三善","id":"41207232","name":"劉珮瑤","wish1":"光澤彤顏醫美診所","wish2":"斯曼特企業股份有限公司","wish3":"台灣施舒雅股份有限公司"},{"timestamp":"2026-04-24 21:16","class":"時尚三善","id":"41207214","name":"蔡彤妍","wish1":"東森得易購股份有限公司","wish2":"唯逗國際有限公司","wish3":"東森得易購股份有限公司"},{"timestamp":"2026-05-03 23:17","class":"時尚三善","id":"41207256","name":"蔡沂燊","wish1":"群翊商行","wish2":"群翊商行","wish3":"台灣屈臣氏股份有限公司"},{"timestamp":"2026-04-30 22:26","class":"時尚三真","id":"41207111","name":"蔡佳容","wish1":"新光三越百貨股份有限公司","wish2":"統一生活事業股份有限公司","wish3":"伊林娛樂"},{"timestamp":"2026-04-30 17:28","class":"時尚三善","id":"41207253","name":"鄭婷優","wish1":"ViviDay美甲美睫","wish2":"Dior（法華香水公司）","wish3":"伊林娛樂"},{"timestamp":"2026-05-01 02:33","class":"時尚三善","id":"41207251","name":"盧彥蓁","wish1":"斯曼特企業股份有限公司","wish2":"費思特國際美容有限公司","wish3":"佐登妮絲國際股份有限公司"},{"timestamp":"2026-04-30 15:30","class":"時尚三真","id":"41209237","name":"賴霈霈","wish1":"維格醫美集團","wish2":"維格醫美集團","wish3":"晶緻醫美集團"},{"timestamp":"2026-04-30 18:04","class":"時尚三善","id":"41207213","name":"謝艾庭","wish1":"映忠孝美髮造型社","wish2":"The Vale.Finest（最丘髮型有限公司）","wish3":"倪萱有限公司"},{"timestamp":"2026-05-02 02:12","class":"時尚三善","id":"41214143","name":"謝佳恩","wish1":"Dior（法華香水公司）","wish2":"香港商希思黎有限公司台灣分公司","wish3":"維格醫美集團"},{"timestamp":"2026-05-01 18:31","class":"時尚三善","id":"41207227","name":"謝佳真","wish1":"光澤彤顏醫美診所","wish2":"曼哈頓股份有限公司（CHWedding）賈永婕婚紗","wish3":"君綺生醫股份有限公司"},{"timestamp":"2026-04-30 22:19","class":"時尚三善","id":"41207228","name":"謝雨筠","wish1":"晶緻醫美集團","wish2":"君綺生醫股份有限公司","wish3":"其他（免實習或海外實習）"},{"timestamp":"2026-05-05 08:13","class":"時尚三善","id":"41207205","name":"聶曼亘","wish1":"伊林娛樂","wish2":"台灣施舒雅股份有限公司","wish3":"曼哈頓股份有限公司（CHWedding）賈永婕婚紗"}];
+
+// ════════════════════════════════════════════════════
+//  Computed stats
+// ════════════════════════════════════════════════════
+function buildStats() {
+  const compMap = {};
+  RAW.forEach(s => {
+    [s.wish1, s.wish2, s.wish3].forEach((w, i) => {
+      if (!w || w.startsWith('其他')) return;
+      if (!compMap[w]) compMap[w] = { w1: 0, w2: 0, w3: 0, students: new Set() };
+      if (i === 0) compMap[w].w1++;
+      if (i === 1) compMap[w].w2++;
+      if (i === 2) compMap[w].w3++;
+      compMap[w].students.add(s.id + s.name);
+    });
+  });
+  return compMap;
+}
+
+const compMap = buildStats();
+
+// Header stats
+const uniqueNames = new Set(RAW.map(s => s.id));
+document.getElementById('st-total').textContent = `共 ${RAW.length} 筆資料 / ${uniqueNames.size} 人`;
+document.getElementById('st-companies').textContent = `${Object.keys(compMap).length} 家廠商`;
+document.getElementById('st-classes').textContent = `時尚三真 · 時尚三善`;
+
+// ════════════════════════════════════════════════════
+//  Tabs
+// ════════════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'company') renderCompanyTable();
+  if (id === 'all') renderAllTable('all');
+  if (id === 'chart') renderChart();
+}
+
+// ════════════════════════════════════════════════════
+//  Tab 1 — Student search
+// ════════════════════════════════════════════════════
+function getCompCount(name, wish) {
+  if (!name || name.startsWith('其他')) return { total: 0, w1: 0 };
+  const c = compMap[name];
+  if (!c) return { total: 0, w1: 0 };
+  const total = c.students.size;
+  const w1 = c.w1;
+  return { total, w1 };
+}
+
+function liveSearch() {
+  const q = document.getElementById('q-name').value.trim();
+  const cls = document.getElementById('q-class').value;
+  const el = document.getElementById('student-result');
+
+  if (!q && !cls) {
+    el.innerHTML = '<p class="empty">請輸入姓名或學號開始查詢</p>';
+    return;
+  }
+  const results = RAW.filter(s => {
+    const matchQ = !q || s.name.includes(q) || s.id.includes(q);
+    const matchC = !cls || s.class === cls;
+    return matchQ && matchC;
+  });
+
+  if (!results.length) {
+    el.innerHTML = '<p class="empty">查無符合資料，請確認姓名或學號</p>';
+    return;
+  }
+
+  el.innerHTML = results.map(s => {
+    const c1 = getCompCount(s.wish1, 1);
+    const c2 = getCompCount(s.wish2, 2);
+    const c3 = getCompCount(s.wish3, 3);
+    return `
+    <div class="student-card" style="margin-bottom:12px">
+      <div class="s-header">
+        <div>
+          <div class="s-name">${s.name}</div>
+          <div class="s-meta">${s.class} &nbsp;｜&nbsp; 學號：${s.id}</div>
+        </div>
+        <div class="s-meta">填表時間：${s.timestamp}</div>
+      </div>
+      <div class="wishes">
+        <div class="wish-item w1">
+          <div class="wish-label">🥇 第一志願</div>
+          <div class="wish-name">${s.wish1 || '（未填）'}</div>
+          ${s.wish1 && !s.wish1.startsWith('其他') ? `<div class="wish-count">共 <span>${c1.total}</span> 位同學選填此廠商 · 第一志願 <span>${c1.w1}</span> 人</div>` : ''}
+        </div>
+        <div class="wish-item w2">
+          <div class="wish-label">🥈 第二志願</div>
+          <div class="wish-name">${s.wish2 || '（未填）'}</div>
+          ${s.wish2 && !s.wish2.startsWith('其他') ? `<div class="wish-count">共 <span>${c2.total}</span> 位同學選填此廠商 · 第一志願 <span>${c2.w1}</span> 人</div>` : ''}
+        </div>
+        <div class="wish-item w3">
+          <div class="wish-label">🥉 第三志願</div>
+          <div class="wish-name">${s.wish3 || '（未填）'}</div>
+          ${s.wish3 && !s.wish3.startsWith('其他') ? `<div class="wish-count">共 <span>${c3.total}</span> 位同學選填此廠商 · 第一志願 <span>${c3.w1}</span> 人</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  Tab 2 — Company table
+// ════════════════════════════════════════════════════
+function renderCompanyTable() {
+  const fq = document.getElementById('f-company').value.toLowerCase();
+  const sort = document.getElementById('f-sort').value;
+
+  let data = Object.entries(compMap).map(([name, c]) => ({
+    name,
+    w1: c.w1, w2: c.w2, w3: c.w3,
+    total: c.w1 + c.w2 + c.w3,
+    students: c.students.size
+  }));
+
+  if (fq) data = data.filter(d => d.name.toLowerCase().includes(fq));
+
+  if (sort === 'total') data.sort((a, b) => b.total - a.total);
+  else if (sort === 'w1')   data.sort((a, b) => b.w1 - a.w1);
+  else if (sort === 'w2')   data.sort((a, b) => b.w2 - a.w2);
+  else if (sort === 'w3')   data.sort((a, b) => b.w3 - a.w3);
+  else data.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+
+  // build student list per company
+  const studentsByComp = {};
+  RAW.forEach(s => {
+    [s.wish1, s.wish2, s.wish3].forEach(w => {
+      if (!w || w.startsWith('其他')) return;
+      if (!studentsByComp[w]) studentsByComp[w] = [];
+      if (!studentsByComp[w].find(x => x.id === s.id)) studentsByComp[w].push(s);
+    });
+  });
+
+  const tbody = document.getElementById('company-tbody');
+  tbody.innerHTML = data.map(d => {
+    const stList = (studentsByComp[d.name] || []).map(s =>
+      `<span class="badge" style="background:#f0f0f0;color:#333">${s.name}(${s.class.replace('時尚三','')})</span>`
+    ).join(' ');
+    return `<tr>
+      <td style="font-weight:600">${d.name}</td>
+      <td><span class="badge b1">${d.w1} 人</span></td>
+      <td><span class="badge b2">${d.w2} 人</span></td>
+      <td><span class="badge b3">${d.w3} 人</span></td>
+      <td><span class="total-badge">${d.total}</span></td>
+      <td style="font-size:0.8rem">${stList}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  Tab 3 — All students
+// ════════════════════════════════════════════════════
+let currentCls = 'all';
+function filterAll(btn) {
+  document.querySelectorAll('.ct-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAllTable(btn.dataset.cls);
+}
+function renderAllTable(cls) {
+  currentCls = cls;
+  const data = cls === 'all' ? RAW : RAW.filter(s => s.class === cls);
+  const tbody = document.getElementById('all-tbody');
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td>${s.class}</td>
+      <td>${s.id}</td>
+      <td style="font-weight:600">${s.name}</td>
+      <td><span class="badge b1">${s.wish1}</span></td>
+      <td><span class="badge b2">${s.wish2}</span></td>
+      <td><span class="badge b3">${s.wish3}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  Tab 4 — Bar chart
+// ════════════════════════════════════════════════════
+function renderChart() {
+  const mode = document.getElementById('chart-mode').value;
+  const cls  = document.getElementById('chart-class').value;
+
+  const filtered = cls === 'all' ? RAW : RAW.filter(s => s.class === cls);
+  const cm = {};
+  filtered.forEach(s => {
+    [s.wish1, s.wish2, s.wish3].forEach((w, i) => {
+      if (!w || w.startsWith('其他')) return;
+      if (!cm[w]) cm[w] = { w1: 0, w2: 0, w3: 0 };
+      if (i === 0) cm[w].w1++;
+      if (i === 1) cm[w].w2++;
+      if (i === 2) cm[w].w3++;
+    });
+  });
+
+  let entries = Object.entries(cm).map(([n, c]) => ({
+    name: n,
+    value: mode === 'total' ? c.w1 + c.w2 + c.w3 : c[mode],
+    w1: c.w1, w2: c.w2, w3: c.w3
+  }));
+  entries.sort((a, b) => b.value - a.value);
+  entries = entries.slice(0, 30);
+  const max = entries[0]?.value || 1;
+
+  const colorClass = mode === 'w1' ? 'c1' : mode === 'w2' ? 'c2' : mode === 'w3' ? 'c3' : 'ca';
+
+  document.getElementById('chart-area').innerHTML = entries.map(e => `
+    <div class="bar-row">
+      <div class="bar-label" title="${e.name}">${e.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill ${colorClass}" style="width:${Math.round(e.value/max*100)}%">
+          <span class="bar-num">${e.value}</span>
+        </div>
+      </div>
+      <div class="bar-total-num">${e.value}</div>
+    </div>
+  `).join('');
+}
+
+// ── Init ──
+renderCompanyTable();
+renderAllTable('all');
+renderChart();
+</script>
+</body>
+</html>
