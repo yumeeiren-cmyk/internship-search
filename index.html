@@ -293,6 +293,7 @@
         <input type="text" id="f-company" placeholder="搜尋廠商名稱…" oninput="renderCompanyTable()" />
         <select id="f-sort" onchange="renderCompanyTable()">
           <option value="total">依總人數排序</option>
+          <option value="w1w2">依前2志願排序（第一＋第二）</option>
           <option value="w1">依第一志願排序</option>
           <option value="w2">依第二志願排序</option>
           <option value="w3">依第三志願排序</option>
@@ -306,8 +307,9 @@
               <th>廠商名稱</th>
               <th>第一志願</th>
               <th>第二志願</th>
+              <th>前2志願合計</th>
               <th>第三志願</th>
-              <th>志願合計</th>
+              <th>志願總計</th>
               <th>選填學生</th>
             </tr>
           </thead>
@@ -503,31 +505,47 @@ function renderCompanyTable() {
 
   if (fq) data = data.filter(d => d.name.toLowerCase().includes(fq));
 
-  if (sort === 'total') data.sort((a, b) => b.total - a.total);
+  if (sort === 'total')     data.sort((a, b) => b.total - a.total);
+  else if (sort === 'w1w2') data.sort((a, b) => (b.w1 + b.w2) - (a.w1 + a.w2));
   else if (sort === 'w1')   data.sort((a, b) => b.w1 - a.w1);
   else if (sort === 'w2')   data.sort((a, b) => b.w2 - a.w2);
   else if (sort === 'w3')   data.sort((a, b) => b.w3 - a.w3);
   else data.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
-  // build student list per company
+  // build student list per company — record which wish rank(s) each student chose
   const studentsByComp = {};
   RAW.forEach(s => {
-    [s.wish1, s.wish2, s.wish3].forEach(w => {
+    [s.wish1, s.wish2, s.wish3].forEach((w, i) => {
       if (!w || w.startsWith('其他')) return;
-      if (!studentsByComp[w]) studentsByComp[w] = [];
-      if (!studentsByComp[w].find(x => x.id === s.id)) studentsByComp[w].push(s);
+      if (!studentsByComp[w]) studentsByComp[w] = {};
+      const key = s.id + '_' + s.name;
+      if (!studentsByComp[w][key]) studentsByComp[w][key] = { s, ranks: [] };
+      const rank = i + 1;
+      if (!studentsByComp[w][key].ranks.includes(rank)) studentsByComp[w][key].ranks.push(rank);
     });
   });
 
+  const rankLabel = { 1: '①', 2: '②', 3: '③' };
+  const rankBg    = { 1: '#fde8f0', 2: '#dbeafe', 3: '#d1fae5' };
+  const rankColor = { 1: '#e74c8b', 2: '#3b82f6', 3: '#10b981' };
+
   const tbody = document.getElementById('company-tbody');
   tbody.innerHTML = data.map(d => {
-    const stList = (studentsByComp[d.name] || []).map(s =>
-      `<span class="badge" style="background:#f0f0f0;color:#333">${s.name}(${s.class.replace('時尚三','')})</span>`
-    ).join(' ');
+    const entries = Object.values(studentsByComp[d.name] || {});
+    // sort: 第一志願 → 第二志願 → 第三志願
+    entries.sort((a, b) => Math.min(...a.ranks) - Math.min(...b.ranks));
+    const stList = entries.map(({ s, ranks }) => {
+      const tags = ranks.map(r =>
+        `<span style="background:${rankBg[r]};color:${rankColor[r]};border-radius:4px;padding:0 4px;font-weight:700;font-size:0.72rem">${rankLabel[r]}</span>`
+      ).join('');
+      return `<span class="badge" style="background:#f5f5f5;color:#333;margin:2px 2px">${tags} ${s.name}(${s.class.replace('時尚三','')})</span>`;
+    }).join(' ');
+    const w1w2 = d.w1 + d.w2;
     return `<tr>
       <td style="font-weight:600">${d.name}</td>
       <td><span class="badge b1">${d.w1} 人</span></td>
       <td><span class="badge b2">${d.w2} 人</span></td>
+      <td><span class="badge" style="background:#f0e6ff;color:#6c3fa0;font-weight:700">${w1w2} 人</span></td>
       <td><span class="badge b3">${d.w3} 人</span></td>
       <td><span class="total-badge">${d.total}</span></td>
       <td style="font-size:0.8rem">${stList}</td>
