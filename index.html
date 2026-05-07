@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>115學年度 時尚造形系 校外實習志願序查詢</title>
+<title>115學年度 臺北城市科技大學 時尚造型事業系 校外實習志願序查詢</title>
 <style>
   :root {
     --primary: #6c3fa0;
@@ -207,6 +207,31 @@
     padding: 10px 14px; margin-bottom: 16px; font-size: 0.83rem; color: #7d5a00;
   }
 
+  /* ── Notice bar ── */
+  .notice-bar {
+    background: rgba(255,220,50,0.25);
+    border: 1px solid rgba(255,220,50,0.6);
+    border-radius: 8px;
+    padding: 7px 16px;
+    margin: 10px auto 0;
+    max-width: 700px;
+    font-size: 0.83rem;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  /* ── Expired overlay ── */
+  #expired-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(40,20,70,0.92);
+    align-items: center; justify-content: center;
+    flex-direction: column; text-align: center; color: #fff;
+  }
+  #expired-overlay.show { display: flex; }
+  #expired-overlay h2 { font-size: 1.5rem; margin-bottom: 12px; }
+  #expired-overlay p  { font-size: 0.95rem; opacity: 0.8; }
+
   /* ── Responsive ── */
   @media (max-width: 600px) {
     .bar-label { width: 130px; }
@@ -218,14 +243,22 @@
 <body>
 
 <header>
-  <h1>🎓 115學年度 時尚造形系 校外實習志願序查詢系統</h1>
-  <p>臺北城市科技大學 時尚造型事業系 · 資料截止日：2026-05-05</p>
+  <h1>🎓 115學年度 臺北城市科技大學 時尚造型事業系<br>校外實習志願序查詢系統</h1>
+  <p>資料截止日：2026-05-05　｜　開放查詢時間至 <strong>2026-05-14</strong> 止　｜　問題聯繫：指導老師 洪啟穎 助理教授</p>
+  <div class="notice-bar">⚠️ 本系統僅供查詢使用，請勿截圖或外傳同學個人資料，謝謝合作。</div>
   <div class="stats-bar">
     <span class="stat-pill" id="st-total">載入中…</span>
     <span class="stat-pill" id="st-companies">廠商數</span>
     <span class="stat-pill" id="st-classes">班級數</span>
   </div>
 </header>
+
+<!-- 到期封鎖提示 -->
+<div id="expired-overlay">
+  <h2>🔒 查詢期限已截止</h2>
+  <p>本系統開放查詢時間至 2026 年 5 月 14 日止。</p>
+  <p style="margin-top:8px">如有疑問，請聯繫指導老師 洪啟穎 助理教授。</p>
+</div>
 
 <main>
   <div class="tabs">
@@ -334,6 +367,16 @@
 </main>
 
 <script>
+// ════════════════════════════════════════════════════
+//  到期檢查（2026-05-14 23:59 後封鎖）
+// ════════════════════════════════════════════════════
+(function checkExpiry() {
+  const deadline = new Date('2026-05-14T23:59:59+08:00');
+  if (new Date() > deadline) {
+    document.getElementById('expired-overlay').classList.add('show');
+  }
+})();
+
 // ════════════════════════════════════════════════════
 //  資料 — 從 Excel 讀取後嵌入
 // ════════════════════════════════════════════════════
