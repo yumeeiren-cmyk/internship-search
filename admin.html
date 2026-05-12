@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>後台管理 — 115學年度校外實習媒合系統</title>
+<style>
+:root{--primary:#6c3fa0;--pl:#9b6cc8;--pbg:#f5f0fb;--b1:#e74c8b;--b2:#3b82f6;--b3:#10b981;--sh:0 2px 14px rgba(108,63,160,0.12);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--pbg);color:#2d2d2d;min-height:100vh;}
+
+/* ── Login ── */
+#page-login{display:block;}#page-admin{display:none;}
+.login-wrap{max-width:400px;margin:80px auto 0;background:#fff;border-radius:16px;box-shadow:var(--sh);padding:36px 32px;text-align:center;}
+.login-wrap .logo{font-size:2.2rem;margin-bottom:12px;}
+.login-wrap h2{font-size:1.1rem;color:var(--primary);margin-bottom:6px;}
+.login-wrap p{font-size:.8rem;color:#999;margin-bottom:24px;}
+.form-g{margin-bottom:14px;text-align:left;}
+.form-g label{font-size:.82rem;font-weight:600;display:block;margin-bottom:5px;}
+.form-g input{width:100%;padding:10px 13px;border:2px solid #ddd;border-radius:8px;font-size:.9rem;outline:none;transition:border .2s;font-family:inherit;}
+.form-g input:focus{border-color:var(--primary);}
+.btn-login{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:700;margin-top:6px;transition:background .2s;}
+.btn-login:hover{background:var(--pl);}
+.msg{border-radius:8px;padding:9px 13px;font-size:.83rem;font-weight:600;margin-bottom:12px;display:none;}
+.msg.err{background:#fee2e2;color:#991b1b;display:block;}
+.msg.ok{background:#d1fae5;color:#065f46;display:block;}
+
+/* ── Header ── */
+header{background:linear-gradient(135deg,var(--primary),var(--pl));color:#fff;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+header h1{font-size:1rem;font-weight:700;line-height:1.4;}
+.hbar{display:flex;align-items:center;gap:10px;}
+.btn-logout{padding:6px 14px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;cursor:pointer;font-size:.82rem;font-weight:600;}
+.btn-logout:hover{background:rgba(255,255,255,.35);}
+.btn-frontpage{padding:6px 14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;cursor:pointer;font-size:.82rem;font-weight:600;text-decoration:none;}
+
+/* ── Main ── */
+main{max-width:1250px;margin:0 auto;padding:20px 14px 60px;}
+
+/* ── Stats ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:var(--sh);}
+.stat-num{font-size:1.9rem;font-weight:800;color:var(--primary);}
+.stat-label{font-size:.74rem;color:#888;margin-top:2px;}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.tab-btn{padding:8px 17px;border-radius:20px;border:2px solid var(--primary);background:#fff;color:var(--primary);cursor:pointer;font-size:.86rem;font-weight:600;transition:all .2s;}
+.tab-btn:hover{background:var(--pbg);}
+.tab-btn.active{background:var(--primary);color:#fff;}
+.admin-panel{display:none;}
+#apanel-students{display:block;}
+
+/* ── Card ── */
+.card{background:#fff;border-radius:14px;box-shadow:var(--sh);padding:20px;margin-bottom:16px;}
+.card h2{font-size:.95rem;color:var(--primary);margin-bottom:14px;border-left:4px solid var(--primary);padding-left:10px;}
+
+/* ── Filter bar ── */
+.fbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.fbar input,.fbar select{padding:8px 11px;border:2px solid #ddd;border-radius:8px;font-size:.84rem;outline:none;transition:border .2s;font-family:inherit;}
+.fbar input:focus,.fbar select:focus{border-color:var(--primary);}
+.fbar input{flex:1;min-width:130px;}
+.btn-act{padding:8px 15px;border-radius:8px;border:none;cursor:pointer;font-size:.83rem;font-weight:700;transition:opacity .2s;white-space:nowrap;}
+.btn-act:hover{opacity:.85;}
+.btn-add{background:var(--primary);color:#fff;}
+.btn-export{background:var(--b3);color:#fff;}
+.btn-filter{background:#6366f1;color:#fff;}
+.btn-import{background:#f59e0b;color:#fff;}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+th{background:var(--primary);color:#fff;padding:9px 10px;text-align:left;white-space:nowrap;}
+th:hover{background:var(--pl);}
+td{padding:7px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--pbg);}
+.badge{display:inline-block;border-radius:9px;padding:2px 7px;font-size:.72rem;font-weight:700;margin:1px;}
+.b1{background:#fde8f0;color:var(--b1);}.b2{background:#dbeafe;color:var(--b2);}.b3{background:#d1fae5;color:#065f46;}
+.total-badge{background:var(--primary);color:#fff;border-radius:9px;padding:2px 7px;font-size:.72rem;font-weight:700;}
+.btn-sm{padding:4px 9px;border:none;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600;margin:1px;}
+.btn-edit{background:#ede9fe;color:#6d28d9;}
+.btn-del{background:#fee2e2;color:#dc2626;}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
+.modal-box h3{font-size:1rem;color:var(--primary);margin-bottom:18px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-g-modal{margin-bottom:12px;}
+.form-g-modal label{font-size:.8rem;font-weight:700;display:block;margin-bottom:4px;color:#555;}
+.form-g-modal input,.form-g-modal select,.form-g-modal textarea{width:100%;padding:9px 11px;border:2px solid #ddd;border-radius:8px;font-size:.87rem;outline:none;transition:border .2s;font-family:inherit;}
+.form-g-modal input:focus,.form-g-modal select:focus,.form-g-modal textarea:focus{border-color:var(--primary);}
+.form-g-modal.full{grid-column:1/-1;}
+.modal-actions{display:flex;gap:10px;margin-top:18px;}
+.btn-save{flex:1;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.9rem;}
+.btn-cancel{flex:1;padding:10px;background:#f0f0f0;color:#555;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.9rem;}
+
+/* ── Company ── */
+#apanel-company table td:first-child{font-weight:600;}
+
+/* ── Confirm modal progress note ── */
+.hint{font-size:.76rem;color:#888;margin-top:4px;}
+
+/* ── Password change ── */
+.settings-box{max-width:400px;}
+</style>
+</head>
+<body>
+
+<!-- ══ 登入頁 ══ -->
+<div id="page-login">
+  <div class="login-wrap">
+    <div class="logo">🔐</div>
+    <h2>後台管理登入</h2>
+    <p>臺北城市科技大學 時尚造型事業系<br>115學年度校外實習媒合系統</p>
+    <div id="login-msg" class="msg"></div>
+    <div class="form-g">
+      <label>管理者密碼</label>
+      <input type="password" id="login-pw" placeholder="請輸入後台密碼" autocomplete="current-password"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">登入後台</button>
+    <p style="margin-top:16px;font-size:.76rem;color:#bbb">忘記密碼請聯繫系統建置者</p>
+  </div>
+</div>
+
+<!-- ══ 後台頁 ══ -->
+<div id="page-admin">
+<header>
+  <div>
+    <h1>⚙️ 後台管理系統｜115學年度 時尚造型事業系 校外實習媒合</h1>
+    <div style="font-size:.76rem;opacity:.8;margin-top:3px">指導老師：洪啟穎 助理教授</div>
+  </div>
+  <div class="hbar">
+    <a class="btn-frontpage" href="index.html" target="_blank">🌐 前往首頁</a>
+    <button class="btn-logout" onclick="doLogout()">登出</button>
+  </div>
+</header>
+
+<main>
+  <div id="admin-msg" class="msg" style="margin-bottom:14px"></div>
+
+  <!-- 統計 -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="st-total">—</div><div class="stat-label">學生總數</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-placed" style="color:var(--primary)">—</div><div class="stat-label">已公告錄取</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-final" style="color:var(--b3)">—</div><div class="stat-label">已確認最終</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-unplaced" style="color:#f59e0b">—</div><div class="stat-label">尚未錄取</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-companies" style="color:var(--b2)">—</div><div class="stat-label">參與廠商</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="atab-students" onclick="aTab('students',this)">📋 學生管理</button>
+    <button class="tab-btn" id="atab-company" onclick="aTab('company',this)">🏢 廠商統計</button>
+    <button class="tab-btn" id="atab-settings" onclick="aTab('settings',this)">⚙️ 系統設定</button>
+  </div>
+
+  <!-- ── 學生管理 ── -->
+  <div id="apanel-students" class="admin-panel">
+    <div class="card">
+      <h2>學生資料管理</h2>
+      <div class="fbar">
+        <input type="text" id="f-keyword" placeholder="搜尋姓名或學號…"/>
+        <select id="f-class">
+          <option value="">所有班級</option>
+          <option value="時尚三真">時尚三真</option>
+          <option value="時尚三善">時尚三善</option>
+        </select>
+        <select id="f-status">
+          <option value="all">所有狀態</option>
+          <option value="placed">已公告錄取</option>
+          <option value="final">已確認最終</option>
+          <option value="unplaced">尚未錄取</option>
+        </select>
+        <button class="btn-act btn-filter" onclick="renderTable()">🔍 篩選</button>
+        <button class="btn-act btn-add" onclick="openModal()">➕ 新增學生</button>
+        <button class="btn-act btn-export" onclick="exportCSV()">📥 匯出 CSV</button>
+        <button class="btn-act btn-import" onclick="document.getElementById('import-file').click()">📂 匯入備份</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)"/>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>班級</th><th>學號</th><th>姓名</th>
+            <th>第一志願</th><th>第二志願</th><th>第三志願</th>
+            <th>錄取單位</th><th>最終實習地點</th><th>確認表單連結</th><th>備註</th><th>操作</th>
+          </tr></thead>
+          <tbody id="student-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 廠商統計 ── -->
+  <div id="apanel-company" class="admin-panel">
+    <div class="card">
+      <h2>廠商志願競爭與錄取統計</h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>廠商名稱</th><th>第一志願</th><th>第二志願</th>
+            <th>前2志願合計</th><th>第三志願</th><th>志願總計</th><th>已錄取人數</th>
+          </tr></thead>
+          <tbody id="company-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 系統設定 ── -->
+  <div id="apanel-settings" class="admin-panel">
+    <div class="card settings-box">
+      <h2>修改後台密碼</h2>
+      <div class="form-g-modal">
+        <label>現有密碼</label>
+        <input type="password" id="pw-old" placeholder="輸入目前密碼"/>
+      </div>
+      <div class="form-g-modal">
+        <label>新密碼</label>
+        <input type="password" id="pw-new" placeholder="輸入新密碼（至少 6 字元）"/>
+      </div>
+      <div class="form-g-modal">
+        <label>確認新密碼</label>
+        <input type="password" id="pw-new2" placeholder="再次輸入新密碼"/>
+      </div>
+      <button class="btn-act btn-add" style="margin-top:6px" onclick="changePw()">🔑 更新密碼</button>
+      <div id="pw-msg" class="msg" style="margin-top:10px"></div>
+    </div>
+    <div class="card settings-box">
+      <h2>備份與還原</h2>
+      <p style="font-size:.83rem;color:#666;margin-bottom:14px">定期匯出 JSON 備份，以防資料遺失。</p>
+      <button class="btn-act btn-export" onclick="exportJSON()" style="margin-right:8px">💾 匯出 JSON 備份</button>
+      <button class="btn-act btn-import" onclick="document.getElementById('import-file2').click()">📂 還原備份</button>
+      <input type="file" id="import-file2" accept=".json" style="display:none" onchange="importJSON(this)"/>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ══ 編輯 Modal ══ -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <h3 id="modal-title">✏️ 新增 / 編輯學生資料</h3>
+    <input type="hidden" id="edit-idx"/>
+    <div class="form-grid">
+      <div class="form-g-modal">
+        <label>班級 *</label>
+        <select id="e-class">
+          <option value="">請選擇</option>
+          <option value="時尚三真">時尚三真</option>
+          <option value="時尚三善">時尚三善</option>
+        </select>
+      </div>
+      <div class="form-g-modal">
+        <label>學號 *</label>
+        <input type="text" id="e-id" placeholder="例：41207206"/>
+      </div>
+      <div class="form-g-modal full">
+        <label>姓名 *</label>
+        <input type="text" id="e-name"/>
+      </div>
+      <div class="form-g-modal full">
+        <label>第一志願</label>
+        <input type="text" id="e-w1" list="company-list"/>
+      </div>
+      <div class="form-g-modal full">
+        <label>第二志願</label>
+        <input type="text" id="e-w2" list="company-list"/>
+      </div>
+      <div class="form-g-modal full">
+        <label>第三志願</label>
+        <input type="text" id="e-w3" list="company-list"/>
+      </div>
+      <div class="form-g-modal full">
+        <label>🏢 錄取單位（填入後首頁即顯示公告）</label>
+        <input type="text" id="e-placed" list="company-list" placeholder="留空表示尚未錄取"/>
+      </div>
+      <div class="form-g-modal full">
+        <label>✅ 最終實習地點（確認後填入）</label>
+        <input type="text" id="e-final" list="company-list" placeholder="留空表示尚未確認"/>
+      </div>
+      <div class="form-g-modal full">
+        <label>📝 Google 表單連結（貼上確認意願表單網址）</label>
+        <input type="url" id="e-form" placeholder="https://forms.gle/..."/>
+        <div class="hint">填入後，學生可在首頁錄取公告區直接點選填寫。</div>
+      </div>
+      <div class="form-g-modal full">
+        <label>備註</label>
+        <textarea id="e-note" rows="2" placeholder="選填…"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveModal()">💾 儲存</button>
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 廠商自動完成清單 -->
+<datalist id="company-list"></datalist>
+
+<script>
+// ══════════════════════════════════════════
+//  密碼管理（儲存在 localStorage）
+// ══════════════════════════════════════════
+const PW_KEY = 'internship_admin_pw_115';
+const DEFAULT_PW = 'fashion2026';  // ← 預設密碼，首次登入後請立即修改
+
+function getAdminPw(){ return localStorage.getItem(PW_KEY) || DEFAULT_PW; }
+
+function doLogin(){
+  const pw = document.getElementById('login-pw').value;
+  if(pw === getAdminPw()){
+    document.getElementById('page-login').style.display='none';
+    document.getElementById('page-admin').style.display='block';
+    init();
+  } else {
+    const m=document.getElementById('login-msg');
+    m.textContent='密碼錯誤，請重試。'; m.className='msg err';
+  }
+}
+document.getElementById('login-pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+function doLogout(){
+  document.getElementById('page-admin').style.display='none';
+  document.getElementById('page-login').style.display='block';
+  document.getElementById('login-pw').value='';
+}
+
+function changePw(){
+  const old=document.getElementById('pw-old').value;
+  const n1=document.getElementById('pw-new').value;
+  const n2=document.getElementById('pw-new2').value;
+  const m=document.getElementById('pw-msg');
+  if(old!==getAdminPw()){m.textContent='現有密碼錯誤';m.className='msg err';return;}
+  if(n1.length<6){m.textContent='新密碼至少需 6 字元';m.className='msg err';return;}
+  if(n1!==n2){m.textContent='兩次新密碼不一致';m.className='msg err';return;}
+  localStorage.setItem(PW_KEY,n1);
+  m.textContent='✅ 密碼已更新成功！';m.className='msg ok';
+  document.getElementById('pw-old').value='';
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-new2').value='';
+}
+
+// ══════════════════════════════════════════
+//  資料管理（儲存在 localStorage）
+// ══════════════════════════════════════════
+const DATA_KEY = 'internship_students_115';
+
+// 預設資料（從 Excel 匯入）
+const DEFAULT_DATA = [{"id": "41207206", "name": "文思涵", "class": "時尚三善", "timestamp": "2026-05-04 11:22", "wish1": "芙美玉貴人美醫集團", "wish2": "ViviDay美甲美睫", "wish3": "維格醫美集團", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207157", "name": "王心妤", "class": "時尚三真", "timestamp": "2026-05-03 20:53", "wish1": "群翊商行", "wish2": "一真為你攝影有限公司", "wish3": "唯逗國際有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207130", "name": "王君文", "class": "時尚三真", "timestamp": "2026-04-23 14:04", "wish1": "The Vale.Finest（最丘髮型有限公司）", "wish2": "群翊商行", "wish3": "Round2（朗貳集團）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207158", "name": "王慧娜", "class": "時尚三真", "timestamp": "2026-04-30 22:25", "wish1": "一真為你攝影有限公司", "wish2": "ViviDay美甲美睫", "wish3": "伊林娛樂", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207117", "name": "朱孟涵", "class": "時尚三真", "timestamp": "2026-04-30 14:08", "wish1": "麗舍時尚婚紗", "wish2": "一真為你攝影有限公司", "wish3": "麗舍時尚婚紗", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207241", "name": "何宜玲", "class": "時尚三善", "timestamp": "2026-05-03 20:55", "wish1": "台灣屈臣氏股份有限公司", "wish2": "統一生活事業股份有限公司", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207249", "name": "余柔萱", "class": "時尚三善", "timestamp": "2026-05-01 01:44", "wish1": "曜胜生技股份有限公司", "wish2": "費思特國際美容有限公司", "wish3": "斯曼特企業股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207208", "name": "余婕安", "class": "時尚三善", "timestamp": "2026-04-30 23:50", "wish1": "伊林娛樂", "wish2": "SHISEIDO 資生堂（華資妝業公司）", "wish3": "伊林娛樂", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207201", "name": "吳沛恩", "class": "時尚三善", "timestamp": "2026-05-03 20:13", "wish1": "斯曼特企業股份有限公司", "wish2": "台灣施舒雅股份有限公司", "wish3": "斯曼特企業股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207148", "name": "吳佳芯", "class": "時尚三真", "timestamp": "2026-05-01 08:39", "wish1": "光澤彤顏醫美診所", "wish2": "映忠孝美髮造型社", "wish3": "統一生活事業股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207118", "name": "吳奕瑩", "class": "時尚三真", "timestamp": "2026-04-30 14:01", "wish1": "曼哈頓股份有限公司（CHWedding）賈永婕婚紗", "wish2": "麗舍時尚婚紗", "wish3": "曼哈頓股份有限公司（CHWedding）賈永婕婚紗", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207236", "name": "吳庭樂", "class": "時尚三善", "timestamp": "2026-05-02 13:08", "wish1": "捌羚設計有限公司", "wish2": "Round2（朗貳集團）", "wish3": "The Vale.Finest（最丘髮型有限公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207210", "name": "呂安妤", "class": "時尚三善", "timestamp": "2026-05-01 00:19", "wish1": "MAKE UP FOR EVER（法華香水公司）", "wish2": "Dior（法華香水公司）", "wish3": "新光三越百貨股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207164", "name": "李立如", "class": "時尚三真", "timestamp": "2026-05-01 12:08", "wish1": "聖宜醫美集團", "wish2": "東森得易購股份有限公司", "wish3": "登琪爾股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207250", "name": "李佳羽", "class": "時尚三善", "timestamp": "2026-05-01 01:07", "wish1": "台灣施舒雅股份有限公司", "wish2": "維格醫美集團", "wish3": "君綺生醫股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207121", "name": "李佳臻", "class": "時尚三真", "timestamp": "2026-04-30 14:07", "wish1": "聖宜醫美集團", "wish2": "君綺生醫股份有限公司", "wish3": "光澤彤顏醫美診所", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207113", "name": "李昀珊", "class": "時尚三真", "timestamp": "2026-04-29 18:50", "wish1": "新光三越百貨股份有限公司", "wish2": "The Vale.Finest（最丘髮型有限公司）", "wish3": "Dior（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207162", "name": "李洋伶", "class": "時尚三真", "timestamp": "2026-04-23 19:24", "wish1": "香港商希思黎有限公司台灣分公司", "wish2": "斯曼特企業股份有限公司", "wish3": "唯逗國際有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207159", "name": "李家華", "class": "時尚三真", "timestamp": "2026-04-30 04:23", "wish1": "太平洋崇光百貨股份有限公司", "wish2": "群翊商行", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207144", "name": "李婕妤", "class": "時尚三真", "timestamp": "2026-05-01 09:42", "wish1": "台灣施舒雅股份有限公司", "wish2": "晶緻醫美集團", "wish3": "唯逗國際有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207243", "name": "李穎婕", "class": "時尚三善", "timestamp": "2026-04-30 22:45", "wish1": "斯曼特企業股份有限公司", "wish2": "唯逗國際有限公司", "wish3": "東森得易購股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207146", "name": "沈佩芸", "class": "時尚三真", "timestamp": "2026-04-30 16:06", "wish1": "君綺生醫股份有限公司", "wish2": "光澤彤顏醫美診所", "wish3": "新光三越百貨股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207240", "name": "沈昱萱", "class": "時尚三善", "timestamp": "2026-04-30 22:47", "wish1": "登琪爾股份有限公司", "wish2": "斯曼特企業股份有限公司", "wish3": "東森得易購股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207134", "name": "卓暐馨", "class": "時尚三真", "timestamp": "2026-04-30 16:03", "wish1": "君綺生醫股份有限公司", "wish2": "光澤彤顏醫美診所", "wish3": "Dior（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207149", "name": "周裔葳", "class": "時尚三真", "timestamp": "2026-05-04 12:15", "wish1": "MAKE UP FOR EVER（法華香水公司）", "wish2": "台灣施舒雅股份有限公司", "wish3": "一真為你攝影有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207140", "name": "林可涵", "class": "時尚三真", "timestamp": "2026-04-30 14:11", "wish1": "聖宜醫美集團", "wish2": "君綺生醫股份有限公司", "wish3": "光澤彤顏醫美診所", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207109", "name": "林芳婷", "class": "時尚三真", "timestamp": "2026-04-30 12:57", "wish1": "梵莎爾企業股份有限公司", "wish2": "唯逗國際有限公司", "wish3": "黛寶拉股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207112", "name": "林采穎", "class": "時尚三真", "timestamp": "2026-04-30 23:25", "wish1": "黛寶拉股份有限公司", "wish2": "東森得易購股份有限公司", "wish3": "台灣施舒雅股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207255", "name": "林范信婕", "class": "時尚三善", "timestamp": "2026-05-04 13:39", "wish1": "其他（免實習或海外實習）", "wish2": "其他（免實習或海外實習）", "wish3": "其他（免實習或海外實習）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207211", "name": "林郁芯", "class": "時尚三善", "timestamp": "2026-04-30 15:28", "wish1": "佐登妮絲國際股份有限公司", "wish2": "登琪爾股份有限公司", "wish3": "斯曼特企業股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207126", "name": "林偉哲", "class": "時尚三真", "timestamp": "2026-04-30 11:45", "wish1": "Dior（法華香水公司）", "wish2": "LUXASIA 盧亞股份有限公司", "wish3": "Guerlain、Benefit（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207163", "name": "林嘉萱", "class": "時尚三真", "timestamp": "2026-04-29 19:15", "wish1": "台灣施舒雅股份有限公司", "wish2": "愛德利亞台灣股份有限公司", "wish3": "唯逗國際有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207145", "name": "邱羿蓁", "class": "時尚三真", "timestamp": "2026-04-30 13:09", "wish1": "一真為你攝影有限公司", "wish2": "一真為你攝影有限公司", "wish3": "麗舍時尚婚紗", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207235", "name": "施妤安", "class": "時尚三善", "timestamp": "2026-05-03 20:17", "wish1": "其他（免實習或海外實習）", "wish2": "其他（免實習或海外實習）", "wish3": "其他（免實習或海外實習）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207235", "name": "施妤安", "class": "時尚三善", "timestamp": "2026-05-04 12:27", "wish1": "其他（免實習或海外實習）", "wish2": "其他（免實習或海外實習）", "wish3": "其他（免實習或海外實習）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207209", "name": "施雅馨", "class": "時尚三善", "timestamp": "2026-04-28 12:32", "wish1": "The Vale.Finest（最丘髮型有限公司）", "wish2": "The Vale.Finest（最丘髮型有限公司）", "wish3": "The Vale.Finest（最丘髮型有限公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207219", "name": "范采誼", "class": "時尚三善", "timestamp": "2026-04-25 22:11", "wish1": "台灣施舒雅股份有限公司", "wish2": "台灣施舒雅股份有限公司", "wish3": "唯逗國際有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207123", "name": "高梓芸", "class": "時尚三真", "timestamp": "2026-05-03 18:56", "wish1": "Round2（朗貳集團）", "wish2": "其他（免實習或海外實習）", "wish3": "其他（免實習或海外實習）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207125", "name": "張雅淇", "class": "時尚三真", "timestamp": "2026-04-30 11:11", "wish1": "Dior（法華香水公司）", "wish2": "MAKE UP FOR EVER（法華香水公司）", "wish3": "新光三越百貨股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207132", "name": "曹芷涵", "class": "時尚三真", "timestamp": "2026-04-24 01:11", "wish1": "維格醫美集團", "wish2": "聖宜醫美集團", "wish3": "Dior（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207106", "name": "梁予瑄", "class": "時尚三真", "timestamp": "2026-04-30 13:36", "wish1": "其他（免實習或海外實習）", "wish2": "其他（免實習或海外實習）", "wish3": "其他（免實習或海外實習）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207147", "name": "梁瑀瑄", "class": "時尚三真", "timestamp": "2026-04-30 21:16", "wish1": "其他（免實習或海外實習）", "wish2": "其他（免實習或海外實習）", "wish3": "聖宜醫美集團", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207234", "name": "許庭瑜", "class": "時尚三善", "timestamp": "2026-04-30 18:26", "wish1": "黛寶拉股份有限公司", "wish2": "唯逗國際有限公司", "wish3": "台灣施舒雅股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207248", "name": "許配慈", "class": "時尚三善", "timestamp": "2026-04-30 18:10", "wish1": "ViviDay美甲美睫", "wish2": "維格醫美集團", "wish3": "晶緻醫美集團", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207268", "name": "許菀芳", "class": "時尚三善", "timestamp": "2026-05-04 12:05", "wish1": "捌羚設計有限公司", "wish2": "倪萱有限公司", "wish3": "The Vale.Finest（最丘髮型有限公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207124", "name": "許誌軒", "class": "時尚三真", "timestamp": "2026-05-01 22:17", "wish1": "Dior（法華香水公司）", "wish2": "MAKE UP FOR EVER（法華香水公司）", "wish3": "Guerlain、Benefit（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41107115", "name": "連珮妡", "class": "時尚三真", "timestamp": "2026-05-01 12:40", "wish1": "十一髮廊 Onze hair", "wish2": "快樂麗康股份有限公司", "wish3": "台灣施舒雅股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207266", "name": "陳宇柔", "class": "時尚三善", "timestamp": "2026-05-03 17:21", "wish1": "統一生活事業股份有限公司", "wish2": "台灣屈臣氏股份有限公司", "wish3": "統一生活事業股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207244", "name": "陳沛妤", "class": "時尚三善", "timestamp": "2026-05-04 06:48", "wish1": "新光三越百貨股份有限公司", "wish2": "MAKE UP FOR EVER（法華香水公司）", "wish3": "Dior（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207154", "name": "陳昕澦", "class": "時尚三真", "timestamp": "2026-05-01 03:31", "wish1": "太平洋崇光百貨股份有限公司", "wish2": "群翊商行", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207131", "name": "陳芷婍", "class": "時尚三真", "timestamp": "2026-04-29 22:41", "wish1": "Dior（法華香水公司）", "wish2": "愛茉莉太平洋股份有限公司", "wish3": "太平洋崇光百貨股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207104", "name": "陳昱如", "class": "時尚三真", "timestamp": "2026-04-23 13:32", "wish1": "台灣屈臣氏股份有限公司", "wish2": "登琪爾股份有限公司", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207116", "name": "陳智惠", "class": "時尚三真", "timestamp": "2026-04-30 23:42", "wish1": "黛寶拉股份有限公司", "wish2": "東森得易購股份有限公司", "wish3": "東森得易購股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207224", "name": "陳語昕", "class": "時尚三善", "timestamp": "2026-05-01 09:09", "wish1": "光澤彤顏醫美診所", "wish2": "君綺生醫股份有限公司", "wish3": "光澤彤顏醫美診所", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207136", "name": "陳螢岑", "class": "時尚三真", "timestamp": "2026-04-30 23:32", "wish1": "The Vale.Finest（最丘髮型有限公司）", "wish2": "群翊商行", "wish3": "捌羚設計有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207137", "name": "曾于芯", "class": "時尚三真", "timestamp": "2026-04-30 16:04", "wish1": "君綺生醫股份有限公司", "wish2": "光澤彤顏醫美診所", "wish3": "新光三越百貨股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207260", "name": "游之綾", "class": "時尚三善", "timestamp": "2026-05-01 13:39", "wish1": "新光三越百貨股份有限公司", "wish2": "MAKE UP FOR EVER（法華香水公司）", "wish3": "Dior（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207160", "name": "游愛如", "class": "時尚三真", "timestamp": "2026-04-30 15:11", "wish1": "一真為你攝影有限公司", "wish2": "麗舍時尚婚紗", "wish3": "法國巨星婚紗", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207138", "name": "黃于晏", "class": "時尚三真", "timestamp": "2026-04-30 20:15", "wish1": "晶緻醫美集團", "wish2": "君綺生醫股份有限公司", "wish3": "光澤彤顏醫美診所", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207119", "name": "黃宣諭", "class": "時尚三真", "timestamp": "2026-04-30 13:27", "wish1": "維格醫美集團", "wish2": "維格醫美集團", "wish3": "晶緻醫美集團", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207254", "name": "黃榆庭", "class": "時尚三善", "timestamp": "2026-04-23 15:10", "wish1": "唯逗國際有限公司", "wish2": "統一生活事業股份有限公司", "wish3": "黛寶拉股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207129", "name": "黃譯葶", "class": "時尚三真", "timestamp": "2026-04-23 23:18", "wish1": "The Vale.Finest（最丘髮型有限公司）", "wish2": "曼哈頓股份有限公司（CHWedding）", "wish3": "伊林娛樂", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207139", "name": "楊于昀", "class": "時尚三真", "timestamp": "2026-04-30 12:38", "wish1": "Dior（法華香水公司）", "wish2": "伊林娛樂", "wish3": "MAKE UP FOR EVER（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207264", "name": "葉芷妤", "class": "時尚三善", "timestamp": "2026-04-29 13:58", "wish1": "曼哈頓股份有限公司（CHWedding）", "wish2": "麗舍時尚婚紗", "wish3": "法國巨星婚紗", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207127", "name": "葉俊佐", "class": "時尚三真", "timestamp": "2026-05-01 01:01", "wish1": "太平洋崇光百貨股份有限公司", "wish2": "統一生活事業股份有限公司", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41210155", "name": "葉昭妡", "class": "時尚三真", "timestamp": "2026-04-30 13:23", "wish1": "其他（免實習或海外實習）", "wish2": "MAKE UP FOR EVER（法華香水公司）", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207218", "name": "葉哲綸", "class": "時尚三善", "timestamp": "2026-05-01 03:11", "wish1": "其他（免實習或海外實習）", "wish2": "Dior（法華香水公司）", "wish3": "MAKE UP FOR EVER（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "412107155", "name": "葉瀞涵", "class": "時尚三真", "timestamp": "2026-05-01 17:07", "wish1": "一真為你攝影有限公司", "wish2": "概念整合行銷有限公司", "wish3": "愛茉莉太平洋股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207242", "name": "董松澄", "class": "時尚三善", "timestamp": "2026-05-03 18:10", "wish1": "台灣屈臣氏股份有限公司", "wish2": "統一生活事業股份有限公司", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "10414721", "name": "詹幃丞", "class": "時尚三善", "timestamp": "2026-05-01 01:46", "wish1": "Dior（法華香水公司）", "wish2": "香港商希思黎有限公司台灣分公司", "wish3": "新光三越百貨股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207120", "name": "廖恩齊", "class": "時尚三真", "timestamp": "2026-05-01 11:57", "wish1": "唯逗國際有限公司", "wish2": "群翊商行", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207231", "name": "劉呈訓", "class": "時尚三善", "timestamp": "2026-05-03 18:28", "wish1": "其他（免實習或海外實習）", "wish2": "黑鵝摩沙有限公司", "wish3": "Dior（法華香水公司）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207110", "name": "劉怡婷", "class": "時尚三真", "timestamp": "2026-04-30 22:19", "wish1": "君綺生醫股份有限公司", "wish2": "MAKE UP FOR EVER（法華香水公司）", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207215", "name": "劉采昕", "class": "時尚三善", "timestamp": "2026-04-24 12:56", "wish1": "Dior（法華香水公司）", "wish2": "香港商希思黎有限公司台灣分公司", "wish3": "君綺生醫股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207232", "name": "劉珮瑤", "class": "時尚三善", "timestamp": "2026-04-30 19:33", "wish1": "光澤彤顏醫美診所", "wish2": "斯曼特企業股份有限公司", "wish3": "台灣施舒雅股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207214", "name": "蔡彤妍", "class": "時尚三善", "timestamp": "2026-04-24 21:16", "wish1": "東森得易購股份有限公司", "wish2": "唯逗國際有限公司", "wish3": "東森得易購股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207256", "name": "蔡沂燊", "class": "時尚三善", "timestamp": "2026-05-03 23:17", "wish1": "群翊商行", "wish2": "群翊商行", "wish3": "台灣屈臣氏股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207111", "name": "蔡佳容", "class": "時尚三真", "timestamp": "2026-04-30 22:26", "wish1": "新光三越百貨股份有限公司", "wish2": "統一生活事業股份有限公司", "wish3": "伊林娛樂", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207253", "name": "鄭婷優", "class": "時尚三善", "timestamp": "2026-04-30 17:28", "wish1": "ViviDay美甲美睫", "wish2": "Dior（法華香水公司）", "wish3": "伊林娛樂", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207251", "name": "盧彥蓁", "class": "時尚三善", "timestamp": "2026-05-01 02:33", "wish1": "斯曼特企業股份有限公司", "wish2": "費思特國際美容有限公司", "wish3": "佐登妮絲國際股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41209237", "name": "賴霈霈", "class": "時尚三真", "timestamp": "2026-04-30 15:30", "wish1": "維格醫美集團", "wish2": "維格醫美集團", "wish3": "晶緻醫美集團", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207213", "name": "謝艾庭", "class": "時尚三善", "timestamp": "2026-04-30 18:04", "wish1": "映忠孝美髮造型社", "wish2": "The Vale.Finest（最丘髮型有限公司）", "wish3": "倪萱有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41214143", "name": "謝佳恩", "class": "時尚三善", "timestamp": "2026-05-02 02:12", "wish1": "Dior（法華香水公司）", "wish2": "香港商希思黎有限公司台灣分公司", "wish3": "維格醫美集團", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207227", "name": "謝佳真", "class": "時尚三善", "timestamp": "2026-05-01 18:31", "wish1": "光澤彤顏醫美診所", "wish2": "曼哈頓股份有限公司（CHWedding）賈永婕婚紗", "wish3": "君綺生醫股份有限公司", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207228", "name": "謝雨筠", "class": "時尚三善", "timestamp": "2026-04-30 22:19", "wish1": "晶緻醫美集團", "wish2": "君綺生醫股份有限公司", "wish3": "其他（免實習或海外實習）", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}, {"id": "41207205", "name": "聶曼亘", "class": "時尚三善", "timestamp": "2026-05-05 08:13", "wish1": "伊林娛樂", "wish2": "台灣施舒雅股份有限公司", "wish3": "曼哈頓股份有限公司（CHWedding）賈永婕婚紗", "placed": "", "finalPlace": "", "confirmForm": "", "note": ""}];
+
+function getData(){ try{ const r=localStorage.getItem(DATA_KEY); return r?JSON.parse(r):DEFAULT_DATA; }catch(e){ return DEFAULT_DATA; } }
+function saveData(d){ localStorage.setItem(DATA_KEY, JSON.stringify(d)); }
+
+// 初始化：若 localStorage 尚無資料，寫入預設
+(function bootstrap(){
+  if(!localStorage.getItem(DATA_KEY)) saveData(DEFAULT_DATA);
+})();
+
+// ══════════════════════════════════════════
+//  初始化後台
+// ══════════════════════════════════════════
+function init(){
+  updateStats();
+  renderTable();
+  renderCompanyTab();
+  buildDatalist();
+}
+
+function updateStats(){
+  const d=getData();
+  const compSet=new Set();
+  d.forEach(s=>{ [s.wish1,s.wish2,s.wish3].forEach(w=>{if(w&&!w.startsWith('其他'))compSet.add(w);}); });
+  document.getElementById('st-total').textContent=d.length;
+  document.getElementById('st-placed').textContent=d.filter(s=>s.placed).length;
+  document.getElementById('st-final').textContent=d.filter(s=>s.finalPlace).length;
+  document.getElementById('st-unplaced').textContent=d.filter(s=>!s.placed).length;
+  document.getElementById('st-companies').textContent=compSet.size;
+}
+
+// ── Tab ──
+function aTab(id,btn){
+  document.querySelectorAll('.admin-panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('apanel-'+id).style.display='block';
+  btn.classList.add('active');
+  if(id==='company') renderCompanyTab();
+}
+
+// ── 渲染學生表格 ──
+function renderTable(){
+  const d=getData();
+  const kw=document.getElementById('f-keyword').value.toLowerCase();
+  const cls=document.getElementById('f-class').value;
+  const st=document.getElementById('f-status').value;
+  const list=d.filter((s,i)=>{
+    s._idx=i; // 記錄原始 index
+    if(cls && s.class!==cls) return false;
+    if(st==='placed' && !s.placed) return false;
+    if(st==='final' && !s.finalPlace) return false;
+    if(st==='unplaced' && s.placed) return false;
+    if(kw && !s.name.toLowerCase().includes(kw) && !s.id.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  // 重新標記 index（搜尋前先對原始陣列標記）
+  d.forEach((s,i)=>s._idx=i);
+  const filtered=d.filter((s)=>{
+    if(cls && s.class!==cls) return false;
+    if(st==='placed' && !s.placed) return false;
+    if(st==='final' && !s.finalPlace) return false;
+    if(st==='unplaced' && s.placed) return false;
+    if(kw && !s.name.toLowerCase().includes(kw) && !s.id.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  document.getElementById('student-tbody').innerHTML = filtered.length
+    ? filtered.map(s=>`<tr>
+        <td>${s.class}</td>
+        <td>${s.id}</td>
+        <td style="font-weight:600">${s.name}</td>
+        <td><span class="badge b1">${s.wish1||'—'}</span></td>
+        <td><span class="badge b2">${s.wish2||'—'}</span></td>
+        <td><span class="badge b3">${s.wish3||'—'}</span></td>
+        <td>${s.placed?`<span class="badge" style="background:#f0e6ff;color:var(--primary)">${s.placed}</span>`:'<span style="color:#ccc">—</span>'}</td>
+        <td>${s.finalPlace?`<span class="badge" style="background:#d1fae5;color:#065f46">${s.finalPlace}</span>`:'<span style="color:#ccc">—</span>'}</td>
+        <td>${s.confirmForm?`<a href="${s.confirmForm}" target="_blank" style="color:var(--b2);font-size:.75rem">🔗 連結</a>`:'<span style="color:#ccc">—</span>'}</td>
+        <td style="font-size:.78rem;color:#888">${s.note||''}</td>
+        <td>
+          <button class="btn-sm btn-edit" onclick="openModal(${s._idx})">✏️</button>
+          <button class="btn-sm btn-del" onclick="delStudent(${s._idx})">🗑️</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="11" style="text-align:center;color:#aaa;padding:20px">查無資料</td></tr>';
+}
+
+// ── Modal 開啟 / 關閉 ──
+function openModal(idx){
+  const d=getData();
+  document.getElementById('edit-idx').value = idx !== undefined ? idx : '';
+  if(idx !== undefined){
+    const s=d[idx];
+    document.getElementById('modal-title').textContent='✏️ 編輯學生資料';
+    document.getElementById('e-class').value = s.class||'';
+    document.getElementById('e-id').value    = s.id||'';
+    document.getElementById('e-name').value  = s.name||'';
+    document.getElementById('e-w1').value    = s.wish1||'';
+    document.getElementById('e-w2').value    = s.wish2||'';
+    document.getElementById('e-w3').value    = s.wish3||'';
+    document.getElementById('e-placed').value= s.placed||'';
+    document.getElementById('e-final').value = s.finalPlace||'';
+    document.getElementById('e-form').value  = s.confirmForm||'';
+    document.getElementById('e-note').value  = s.note||'';
+  } else {
+    document.getElementById('modal-title').textContent='➕ 新增學生資料';
+    ['e-class','e-id','e-name','e-w1','e-w2','e-w3','e-placed','e-final','e-form','e-note']
+      .forEach(id=>{ const el=document.getElementById(id); el.tagName==='SELECT'?el.value='':el.value=''; });
+  }
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('edit-modal').classList.remove('open'); }
+
+// ── 儲存 Modal ──
+function saveModal(){
+  const idx = document.getElementById('edit-idx').value;
+  const cls = document.getElementById('e-class').value.trim();
+  const sid = document.getElementById('e-id').value.trim();
+  const name= document.getElementById('e-name').value.trim();
+  if(!cls||!sid||!name){ showMsg('admin-msg','班級、學號、姓名為必填！','err'); closeModal(); return; }
+  const d = getData();
+  const rec = {
+    class: cls, id: sid, name,
+    timestamp: idx!==''? (d[idx]?.timestamp||now()) : now(),
+    wish1: document.getElementById('e-w1').value.trim(),
+    wish2: document.getElementById('e-w2').value.trim(),
+    wish3: document.getElementById('e-w3').value.trim(),
+    placed:      document.getElementById('e-placed').value.trim(),
+    finalPlace:  document.getElementById('e-final').value.trim(),
+    confirmForm: document.getElementById('e-form').value.trim(),
+    note:        document.getElementById('e-note').value.trim()
+  };
+  if(idx!=='') d[parseInt(idx)]=rec;
+  else d.push(rec);
+  saveData(d);
+  closeModal();
+  showMsg('admin-msg','✅ 已儲存','ok');
+  updateStats(); renderTable(); renderCompanyTab(); buildDatalist();
+}
+
+function now(){ return new Date().toLocaleString('zh-TW',{hour12:false}).replace(/\//g,'-'); }
+
+// ── 刪除 ──
+function delStudent(idx){
+  if(!confirm('確定要刪除此學生資料？此動作無法復原。')) return;
+  const d=getData(); d.splice(idx,1); saveData(d);
+  showMsg('admin-msg','已刪除','ok');
+  updateStats(); renderTable(); renderCompanyTab();
+}
+
+// ── 廠商統計 ──
+function renderCompanyTab(){
+  const d=getData();
+  const cm={};
+  d.forEach(s=>{
+    [s.wish1,s.wish2,s.wish3].forEach((w,i)=>{
+      if(!w||w.startsWith('其他')) return;
+      if(!cm[w]) cm[w]={w1:0,w2:0,w3:0,placed:0};
+      if(i===0)cm[w].w1++;if(i===1)cm[w].w2++;if(i===2)cm[w].w3++;
+    });
+    if(s.placed){ if(!cm[s.placed])cm[s.placed]={w1:0,w2:0,w3:0,placed:0}; cm[s.placed].placed++; }
+  });
+  const sorted=Object.entries(cm).sort((a,b)=>(b[1].w1+b[1].w2)-(a[1].w1+a[1].w2));
+  document.getElementById('company-tbody').innerHTML=sorted.map(([name,c])=>`<tr>
+    <td>${name}</td>
+    <td><span class="badge b1">${c.w1}</span></td>
+    <td><span class="badge b2">${c.w2}</span></td>
+    <td><span class="badge" style="background:#f0e6ff;color:var(--primary)">${c.w1+c.w2}</span></td>
+    <td><span class="badge b3">${c.w3}</span></td>
+    <td><span class="total-badge">${c.w1+c.w2+c.w3}</span></td>
+    <td><span class="badge" style="background:#d1fae5;color:#065f46">${c.placed}</span></td>
+  </tr>`).join('');
+}
+
+// ── datalist（廠商自動完成）──
+function buildDatalist(){
+  const d=getData();
+  const names=new Set();
+  d.forEach(s=>{ [s.wish1,s.wish2,s.wish3].forEach(w=>{ if(w&&!w.startsWith('其他')) names.add(w); }); });
+  document.getElementById('company-list').innerHTML=[...names].map(n=>`<option value="${n}">`).join('');
+}
+
+// ── 匯出 CSV ──
+function exportCSV(){
+  const d=getData();
+  const hdr=['班級','學號','姓名','第一志願','第二志願','第三志願','錄取單位','最終實習地點','確認表單','備註'];
+  const rows=d.map(s=>[s.class,s.id,s.name,s.wish1,s.wish2,s.wish3,s.placed,s.finalPlace,s.confirmForm,s.note]);
+  const csv='﻿'+[hdr,...rows].map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(new Blob([csv],{type:'text/csv;charset=utf-8;'}),'實習媒合管理報表.csv');
+}
+
+// ── 匯出 JSON 備份 ──
+function exportJSON(){
+  const d=getData();
+  dl(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),'實習媒合備份_'+dateStr()+'.json');
+}
+
+// ── 匯入 JSON 備份 ──
+function importJSON(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('格式錯誤');
+      if(!confirm(`確定要匯入 ${data.length} 筆學生資料？這將覆蓋現有資料。`)) return;
+      saveData(data);
+      showMsg('admin-msg',`✅ 已匯入 ${data.length} 筆資料`,'ok');
+      updateStats(); renderTable(); renderCompanyTab(); buildDatalist();
+    }catch(err){ showMsg('admin-msg','匯入失敗：格式不符','err'); }
+    input.value='';
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+function dl(blob,name){ const url=URL.createObjectURL(blob),a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); }
+function dateStr(){ return new Date().toISOString().slice(0,10); }
+function showMsg(id,text,type){ const el=document.getElementById(id); el.textContent=text; el.className='msg '+type; setTimeout(()=>el.className='msg',4000); }
+
+// 點擊 modal 外部關閉
+document.getElementById('edit-modal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+</script>
+</body>
+</html>
