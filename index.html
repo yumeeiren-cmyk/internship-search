@@ -270,12 +270,15 @@ function getData(){
   return DEFAULT_STUDENTS;
 }
 
+// 向下相容：舊資料 placed/finalPlace 可能是字串，統一轉為陣列
+function toArr(v){ if(!v) return []; if(Array.isArray(v)) return v.filter(x=>x.trim()!==''); return v.trim()===''?[]:[v.trim()]; }
+
 let DATA = getData();
 
 // ── 更新統計列 ──
 function updateStats(){
   const compMap=buildCompMap(DATA);
-  const placed=DATA.filter(s=>s.placed).length;
+  const placed=DATA.filter(s=>toArr(s.placed).length>0).length;
   document.getElementById('st-total').textContent=`共 ${DATA.length} 位同學`;
   document.getElementById('st-placed').textContent=`已公告錄取 ${placed} 人`;
   document.getElementById('st-companies').textContent=`${Object.keys(compMap).length} 家廠商`;
@@ -315,10 +318,11 @@ function renderAnnounce(){
   const filter=document.getElementById('ann-filter').value;
 
   let list=DATA.filter(s=>{
-    if(filter==='placed' && !s.placed) return false;
-    if(filter==='final' && !s.finalPlace) return false;
+    if(filter==='placed' && toArr(s.placed).length===0) return false;
+    if(filter==='final' && toArr(s.finalPlace).length===0) return false;
     if(cls && s.class!==cls) return false;
-    if(q && !s.name.toLowerCase().includes(q) && !(s.placed||'').toLowerCase().includes(q)) return false;
+    const placedStr=toArr(s.placed).join(' ');
+    if(q && !s.name.toLowerCase().includes(q) && !placedStr.toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -328,17 +332,20 @@ function renderAnnounce(){
   }
   document.getElementById('announce-area').innerHTML=
     '<div class="announce-grid">'+
-    list.map(s=>`
+    list.map(s=>{
+      const placedArr=toArr(s.placed);
+      const finalArr=toArr(s.finalPlace);
+      return `
       <div class="announce-card">
         <div class="announce-student">${s.name}</div>
         <div class="announce-meta">${s.class}　學號：${s.id}</div>
-        ${s.placed?`<div class="announce-placed">🏢 錄取：${s.placed}</div>`:''}
-        ${s.finalPlace?`<div class="announce-final">✅ 最終實習單位：${s.finalPlace}</div>`:''}
+        ${placedArr.length?placedArr.map(p=>`<div class="announce-placed">🏢 錄取：${p}</div>`).join(''):''}
+        ${finalArr.length?finalArr.map(p=>`<div class="announce-final">✅ 最終實習單位：${p}</div>`).join(''):''}
         ${s.confirmForm?`<a class="announce-form-btn" href="${s.confirmForm}" target="_blank">📝 填寫確認意願表單</a>`:''}
         ${s.note?`<div class="announce-note">備註：${s.note}</div>`:''}
-        ${!s.placed&&!s.finalPlace?'<div style="color:#bbb;font-size:.82rem">尚未公告錄取結果</div>':''}
-      </div>`
-    ).join('')+'</div>';
+        ${!placedArr.length&&!finalArr.length?'<div style="color:#bbb;font-size:.82rem">尚未公告錄取結果</div>':''}
+      </div>`;
+    }).join('')+'</div>';
 }
 
 // ── 學生查詢 ──
@@ -385,8 +392,8 @@ function liveSearch(){
           ${s.wish3&&!s.wish3.startsWith('其他')?`<div class="wish-count">共 <span>${c3.total}</span> 人選填 · 第一志願 <span>${c3.w1}</span> 人</div>`:''}
         </div>
       </div>
-      ${s.placed?`<div class="placed-row"><span class="placed-label">🏢 錄取單位</span><span class="placed-name">${s.placed}</span></div>`:''}
-      ${s.finalPlace?`<div class="final-row"><span class="final-label">✅ 最終實習</span><span class="final-name">${s.finalPlace}</span></div>`:''}
+      ${toArr(s.placed).length?toArr(s.placed).map(p=>`<div class="placed-row"><span class="placed-label">🏢 錄取單位</span><span class="placed-name">${p}</span></div>`).join(''):''}
+      ${toArr(s.finalPlace).length?toArr(s.finalPlace).map(p=>`<div class="final-row"><span class="final-label">✅ 最終實習</span><span class="final-name">${p}</span></div>`).join(''):''}
     </div>`;
   }).join('');
 }
@@ -456,8 +463,8 @@ function renderAllTable(cls){
       <td><span class="badge b1">${s.wish1}</span></td>
       <td><span class="badge b2">${s.wish2}</span></td>
       <td><span class="badge b3">${s.wish3}</span></td>
-      <td>${s.placed?`<span class="badge" style="background:#f0e6ff;color:var(--primary)">${s.placed}</span>`:'<span style="color:#ccc">—</span>'}</td>
-      <td>${s.finalPlace?`<span class="badge" style="background:#d1fae5;color:#065f46">${s.finalPlace}</span>`:'<span style="color:#ccc">—</span>'}</td>
+      <td>${toArr(s.placed).length?toArr(s.placed).map(p=>`<span class="badge" style="background:#f0e6ff;color:var(--primary);display:inline-block;margin:1px">${p}</span>`).join(''):'<span style="color:#ccc">—</span>'}</td>
+      <td>${toArr(s.finalPlace).length?toArr(s.finalPlace).map(p=>`<span class="badge" style="background:#d1fae5;color:#065f46;display:inline-block;margin:1px">${p}</span>`).join(''):'<span style="color:#ccc">—</span>'}</td>
     </tr>`).join('');
 }
 
