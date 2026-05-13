@@ -189,25 +189,20 @@ tr:hover td{background:var(--pbg);}
   <div id="apanel-settings" class="admin-panel">
     <div class="card settings-box">
       <h2>🔗 Google Sheets 連線設定</h2>
-      <p style="font-size:.83rem;color:#666;margin-bottom:12px">貼入部署 Apps Script 後取得的「網路應用程式網址」。</p>
+      <p style="font-size:.83rem;color:#666;margin-bottom:8px">目前使用的 Apps Script 網址：</p>
+      <p style="font-size:.78rem;color:var(--primary);word-break:break-all;margin-bottom:12px;background:var(--pbg);padding:8px;border-radius:6px" id="current-url-display"></p>
       <div class="form-g-modal">
-        <label>Apps Script 部署網址</label>
+        <label>更換網址（有需要時才填）</label>
         <input type="url" id="api-url-input" placeholder="https://script.google.com/macros/s/…/exec"/>
       </div>
-      <button class="btn-act btn-add" onclick="saveApiUrl()">💾 儲存網址</button>
+      <button class="btn-act btn-add" onclick="saveApiUrl()">💾 更換並儲存</button>
       <div id="api-msg" class="msg" style="margin-top:10px"></div>
     </div>
     <div class="card settings-box">
       <h2>修改後台密碼</h2>
-      <div class="form-g-modal">
-        <label>現有密碼</label><input type="password" id="pw-old" placeholder="輸入目前密碼"/>
-      </div>
-      <div class="form-g-modal">
-        <label>新密碼</label><input type="password" id="pw-new" placeholder="新密碼（至少 6 字元）"/>
-      </div>
-      <div class="form-g-modal">
-        <label>確認新密碼</label><input type="password" id="pw-new2" placeholder="再次輸入新密碼"/>
-      </div>
+      <div class="form-g-modal"><label>現有密碼</label><input type="password" id="pw-old" placeholder="輸入目前密碼"/></div>
+      <div class="form-g-modal"><label>新密碼</label><input type="password" id="pw-new" placeholder="新密碼（至少 6 字元）"/></div>
+      <div class="form-g-modal"><label>確認新密碼</label><input type="password" id="pw-new2" placeholder="再次輸入新密碼"/></div>
       <button class="btn-act btn-add" style="margin-top:6px" onclick="changePw()">🔑 更新密碼</button>
       <div id="pw-msg" class="msg" style="margin-top:10px"></div>
     </div>
@@ -262,32 +257,46 @@ tr:hover td{background:var(--pbg);}
 <datalist id="company-list"></datalist>
 
 <script>
-const API_URL_KEY='internship_api_url_115';
-const PW_KEY='internship_admin_pw_115';
-const DEFAULT_PW='fashion2026';
-function getApiUrl(){return localStorage.getItem(API_URL_KEY)||'';}
-function getAdminPw(){return localStorage.getItem(PW_KEY)||DEFAULT_PW;}
+// ══════════════════════════════════════════
+//  ★ Script 網址已直接寫入，所有電腦都能使用
+// ══════════════════════════════════════════
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJxJYEE7m9x-74vv5vFsqKIEbTa_moLTZ6f0tFVJjopMOnuE7OLjlziR1irCS2Pigy7w/exec';
+const API_URL_KEY = 'internship_api_url_115';
+const PW_KEY      = 'internship_admin_pw_115';
+const DEFAULT_PW  = 'fashion2026';
+
+// localStorage 優先（允許手動更換），否則用預設網址
+function getApiUrl(){ return localStorage.getItem(API_URL_KEY) || DEFAULT_SCRIPT_URL; }
+function getAdminPw(){ return localStorage.getItem(PW_KEY) || DEFAULT_PW; }
+
 function saveApiUrl(){
-  const url=document.getElementById('api-url-input').value.trim();
-  if(!url){showMsg('api-msg','請輸入網址','err');return;}
-  localStorage.setItem(API_URL_KEY,url);
-  showMsg('api-msg','✅ 網址已儲存！重新整理頁面後即可連線','ok');
+  const url = document.getElementById('api-url-input').value.trim();
+  if(!url){ showMsg('api-msg','請輸入網址','err'); return; }
+  localStorage.setItem(API_URL_KEY, url);
+  document.getElementById('current-url-display').textContent = url;
+  showMsg('api-msg','✅ 網址已更換並儲存！','ok');
 }
+
 function doLogin(){
-  const pw=document.getElementById('login-pw').value;
-  if(pw===getAdminPw()){
+  const pw = document.getElementById('login-pw').value;
+  if(pw === getAdminPw()){
     document.getElementById('page-login').style.display='none';
     document.getElementById('page-admin').style.display='block';
-    document.getElementById('api-url-input').value=getApiUrl();
+    document.getElementById('current-url-display').textContent = getApiUrl();
     init();
-  }else{const m=document.getElementById('login-msg');m.textContent='密碼錯誤，請重試。';m.className='msg err';}
+  } else {
+    const m = document.getElementById('login-msg');
+    m.textContent='密碼錯誤，請重試。'; m.className='msg err';
+  }
 }
-document.getElementById('login-pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('login-pw').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
 function doLogout(){
   document.getElementById('page-admin').style.display='none';
   document.getElementById('page-login').style.display='block';
   document.getElementById('login-pw').value='';
 }
+
 function changePw(){
   const old=document.getElementById('pw-old').value;
   const n1=document.getElementById('pw-new').value;
@@ -302,41 +311,42 @@ function changePw(){
 }
 
 let CACHE=[];
+
 async function fetchData(){
-  const url=getApiUrl();
-  if(!url){
-    showMsg('admin-msg','⚠️ 尚未設定 Google Sheets 網址，請至「系統設定」填入。','err');
-    document.getElementById('student-tbody').innerHTML='<tr><td colspan="11" style="text-align:center;color:#f59e0b;padding:20px">⚠️ 請先至「系統設定」填入 Apps Script 網址</td></tr>';
-    return[];
-  }
+  const url = getApiUrl();
   try{
-    const res=await fetch(url);
-    const json=await res.json();
-    if(json.ok){CACHE=json.data;return CACHE;}
-    showMsg('admin-msg','讀取失敗：'+json.error,'err');return[];
+    const res  = await fetch(url);
+    const json = await res.json();
+    if(json.ok){ CACHE=json.data; return CACHE; }
+    showMsg('admin-msg','讀取失敗：'+json.error,'err'); return [];
   }catch(e){
     showMsg('admin-msg','無法連線 API：'+e.message,'err');
-    document.getElementById('student-tbody').innerHTML='<tr><td colspan="11" style="text-align:center;color:#dc2626;padding:20px">❌ 連線失敗，請確認 Apps Script 網址是否正確</td></tr>';
-    return[];
+    document.getElementById('student-tbody').innerHTML='<tr><td colspan="11" style="text-align:center;color:#dc2626;padding:20px">❌ 連線失敗，請確認網路連線</td></tr>';
+    return [];
   }
 }
+
 async function apiPost(payload){
-  const url=getApiUrl();
-  if(!url){showMsg('admin-msg','⚠️ 尚未設定 Apps Script 網址','err');return null;}
+  const url = getApiUrl();
   try{
-    const res=await fetch(url,{method:'POST',body:JSON.stringify(payload)});
+    const res = await fetch(url,{method:'POST',body:JSON.stringify(payload)});
     return await res.json();
-  }catch(e){showMsg('admin-msg','API 連線失敗：'+e.message,'err');return null;}
+  }catch(e){
+    showMsg('admin-msg','API 連線失敗：'+e.message,'err'); return null;
+  }
 }
+
 async function init(){
-  const data=await fetchData();
-  CACHE=data;updateStats(data);renderTable();buildDatalist();
+  const data = await fetchData();
+  CACHE=data; updateStats(data); renderTable(); buildDatalist();
 }
+
 function toArr(v){
   if(!v)return[];
   if(Array.isArray(v))return v.filter(x=>String(x).trim()!=='');
   return String(v).trim()===''?[]:[String(v).trim()];
 }
+
 function updateStats(data){
   const d=data||CACHE;
   const compSet=new Set();
@@ -347,12 +357,14 @@ function updateStats(data){
   document.getElementById('st-unplaced').textContent=d.filter(s=>toArr(s.placed).length===0).length;
   document.getElementById('st-companies').textContent=compSet.size;
 }
+
 function aTab(id,btn){
   document.querySelectorAll('.admin-panel').forEach(p=>p.style.display='none');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('apanel-'+id).style.display='block';btn.classList.add('active');
+  document.getElementById('apanel-'+id).style.display='block'; btn.classList.add('active');
   if(id==='company')renderCompanyTab();
 }
+
 function renderTable(){
   const kw=document.getElementById('f-keyword').value.toLowerCase();
   const cls=document.getElementById('f-class').value;
@@ -384,6 +396,7 @@ function renderTable(){
       </tr>`).join('')
     :'<tr><td colspan="11" style="text-align:center;color:#aaa;padding:20px">查無資料</td></tr>';
 }
+
 function addPlacedRow(val){
   const row=document.createElement('div');row.className='multi-row';
   row.innerHTML=`<input type="text" list="company-list" placeholder="廠商名稱" value="${val||''}"/><button type="button" class="btn-del-row" onclick="this.parentNode.remove()">✕</button>`;
@@ -397,6 +410,7 @@ function addFinalRow(val){
 function getMultiVals(id){
   return[...document.querySelectorAll('#'+id+' .multi-row input')].map(i=>i.value.trim()).filter(v=>v!=='');
 }
+
 function openModal(idx){
   document.getElementById('edit-idx').value=idx!==undefined?idx:'';
   document.getElementById('placed-list').innerHTML='';
@@ -422,6 +436,7 @@ function openModal(idx){
   document.getElementById('edit-modal').classList.add('open');
 }
 function closeModal(){document.getElementById('edit-modal').classList.remove('open');}
+
 async function saveModal(){
   const idx=document.getElementById('edit-idx').value;
   const cls=document.getElementById('e-class').value.trim();
@@ -447,6 +462,7 @@ async function saveModal(){
   else showMsg('admin-msg','⚠️ 本地已更新，但 Sheets 同步失敗：'+(res?res.error:'未知錯誤'),'err');
   updateStats(CACHE);renderTable();buildDatalist();
 }
+
 async function delStudent(idx){
   if(!confirm('確定要刪除此學生資料？此動作無法復原。'))return;
   CACHE.splice(idx,1);
@@ -456,6 +472,7 @@ async function delStudent(idx){
   else showMsg('admin-msg','⚠️ 本地已刪除，但 Sheets 同步失敗','err');
   updateStats(CACHE);renderTable();renderCompanyTab();
 }
+
 function renderCompanyTab(){
   const d=CACHE,cm={};
   d.forEach(s=>{
@@ -477,11 +494,13 @@ function renderCompanyTab(){
     <td><span class="badge" style="background:#d1fae5;color:#065f46">${c.placed}</span></td>
   </tr>`).join('');
 }
+
 function buildDatalist(){
   const names=new Set();
   CACHE.forEach(s=>{[s.wish1,s.wish2,s.wish3].forEach(w=>{if(w&&!w.startsWith('其他'))names.add(w);});});
   document.getElementById('company-list').innerHTML=[...names].map(n=>`<option value="${n}">`).join('');
 }
+
 function exportCSV(){
   const hdr=['班級','學號','姓名','第一志願','第二志願','第三志願','錄取單位','最終實習地點','確認表單','備註'];
   const rows=CACHE.map(s=>[s.class,s.id,s.name,s.wish1,s.wish2,s.wish3,toArr(s.placed).join('；'),toArr(s.finalPlace).join('；'),s.confirmForm,s.note]);
