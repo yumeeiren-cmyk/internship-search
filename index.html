@@ -118,7 +118,7 @@ tr:hover td{background:var(--pbg);}
 
 <div id="expired-overlay">
   <h2>🔒 查詢期限已截止</h2>
-  <p>本系統開放查詢時間至 2026 年 5 月 14 日止。</p>
+  <p>本系統開放查詢時間至 2026 年 7 月 31 日止。</p>
   <p style="margin-top:8px">如有疑問，請聯繫洪啟穎助理教授。</p>
 </div>
 
@@ -239,7 +239,7 @@ tr:hover td{background:var(--pbg);}
 <script>
 // ── 到期檢查 ──
 (function(){
-  const d=new Date('2026-05-14T23:59:59+08:00');
+  const d=new Date('2026-07-31T23:59:59+08:00');
   if(new Date()>d)document.getElementById('expired-overlay').classList.add('show');
 })();
 
