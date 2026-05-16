@@ -161,10 +161,10 @@ tr:hover td{background:var(--pbg);}
           <thead><tr>
             <th>班級</th><th>學號</th><th>姓名</th>
             <th>第一志願</th><th>第二志願</th><th>第三志願</th>
-            <th>錄取單位</th><th>最終實習地點</th><th>確認表單</th><th>備註</th><th>操作</th>
+            <th>錄取單位</th><th>公告日期</th><th>最終實習地點</th><th>確認表單</th><th>備註</th><th>操作</th>
           </tr></thead>
           <tbody id="student-tbody">
-            <tr><td colspan="11" class="loading"><span class="spinner"></span>載入中，請稍候…</td></tr>
+            <tr><td colspan="12" class="loading"><span class="spinner"></span>載入中，請稍候…</td></tr>
           </tbody>
         </table>
       </div>
@@ -187,6 +187,15 @@ tr:hover td{background:var(--pbg);}
   </div>
 
   <div id="apanel-settings" class="admin-panel">
+    <div class="card settings-box">
+      <h2>🔒 前台開放狀態</h2>
+      <p style="font-size:.83rem;color:#666;margin-bottom:14px">關閉後，學生前台將顯示「系統暫停查詢」畫面。</p>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <span id="sys-status-label" style="font-size:.95rem;font-weight:700">— 讀取中 —</span>
+        <button id="sys-toggle-btn" class="btn-act" onclick="toggleSystem()" style="min-width:110px">—</button>
+      </div>
+      <div id="sys-msg" class="msg"></div>
+    </div>
     <div class="card settings-box">
       <h2>🔗 Google Sheets 連線設定</h2>
       <p style="font-size:.83rem;color:#666;margin-bottom:8px">目前使用的 Apps Script 網址：</p>
@@ -235,6 +244,11 @@ tr:hover td{background:var(--pbg);}
         <label>🏢 錄取單位（填入後首頁即顯示公告）</label>
         <div id="placed-list"></div>
         <button type="button" class="btn-add-row" onclick="addPlacedRow('')">＋ 新增錄取單位</button>
+      </div>
+      <div class="form-g-modal full">
+        <label>📅 公告日期</label>
+        <input type="date" id="e-placedDate"/>
+        <div class="hint">錄取公告的日期，前台將依此由新到舊排序顯示。</div>
       </div>
       <div class="form-g-modal full">
         <label>✅ 最終實習地點</label>
@@ -317,12 +331,47 @@ async function fetchData(){
   try{
     const res  = await fetch(url);
     const json = await res.json();
-    if(json.ok){ CACHE=json.data; return CACHE; }
+    if(json.ok){
+      CACHE=json.data;
+      if(typeof json.systemClosed !== 'undefined') updateSystemStatusUI(json.systemClosed);
+      return CACHE;
+    }
     showMsg('admin-msg','讀取失敗：'+json.error,'err'); return [];
   }catch(e){
     showMsg('admin-msg','無法連線 API：'+e.message,'err');
-    document.getElementById('student-tbody').innerHTML='<tr><td colspan="11" style="text-align:center;color:#dc2626;padding:20px">❌ 連線失敗，請確認網路連線</td></tr>';
+    document.getElementById('student-tbody').innerHTML='<tr><td colspan="12" style="text-align:center;color:#dc2626;padding:20px">❌ 連線失敗，請確認網路連線</td></tr>';
     return [];
+  }
+}
+
+let _systemClosed = false;
+function updateSystemStatusUI(closed){
+  _systemClosed = closed;
+  const label = document.getElementById('sys-status-label');
+  const btn   = document.getElementById('sys-toggle-btn');
+  if(closed){
+    label.textContent = '🔴 前台已關閉';
+    label.style.color = '#dc2626';
+    btn.textContent   = '✅ 開放前台';
+    btn.style.background = '#10b981';
+  } else {
+    label.textContent = '🟢 前台開放中';
+    label.style.color = '#059669';
+    btn.textContent   = '🔒 關閉前台';
+    btn.style.background = '#dc2626';
+  }
+  btn.style.color = '#fff';
+}
+
+async function toggleSystem(){
+  const next = !_systemClosed;
+  showMsg('sys-msg','⏳ 更新中…','ok');
+  const res = await apiPost({action:'set_setting', key:'systemClosed', value:next});
+  if(res && res.ok){
+    updateSystemStatusUI(next);
+    showMsg('sys-msg', next ? '✅ 前台已關閉，學生無法查詢' : '✅ 前台已開放，學生可正常查詢','ok');
+  } else {
+    showMsg('sys-msg','⚠️ 更新失敗：'+(res?res.error:'未知錯誤'),'err');
   }
 }
 
@@ -386,6 +435,7 @@ function renderTable(){
         <td><span class="badge b2">${s.wish2||'—'}</span></td>
         <td><span class="badge b3">${s.wish3||'—'}</span></td>
         <td>${toArr(s.placed).length?toArr(s.placed).map(p=>`<span class="badge" style="background:#f0e6ff;color:var(--primary)">${p}</span>`).join(''):'<span style="color:#ccc">—</span>'}</td>
+        <td style="font-size:.78rem;color:#666;white-space:nowrap">${s.placedDate||'<span style="color:#ccc">—</span>'}</td>
         <td>${toArr(s.finalPlace).length?toArr(s.finalPlace).map(p=>`<span class="badge" style="background:#d1fae5;color:#065f46">${p}</span>`).join(''):'<span style="color:#ccc">—</span>'}</td>
         <td>${s.confirmForm?`<a href="${s.confirmForm}" target="_blank" style="color:var(--b2);font-size:.75rem">🔗 連結</a>`:'<span style="color:#ccc">—</span>'}</td>
         <td style="font-size:.78rem;color:#888">${s.note||''}</td>
@@ -394,7 +444,7 @@ function renderTable(){
           <button class="btn-sm btn-del" onclick="delStudent(${s._idx})">🗑️</button>
         </td>
       </tr>`).join('')
-    :'<tr><td colspan="11" style="text-align:center;color:#aaa;padding:20px">查無資料</td></tr>';
+    :'<tr><td colspan="12" style="text-align:center;color:#aaa;padding:20px">查無資料</td></tr>';
 }
 
 function addPlacedRow(val){
@@ -426,11 +476,13 @@ function openModal(idx){
     document.getElementById('e-w3').value=s.wish3||'';
     document.getElementById('e-form').value=s.confirmForm||'';
     document.getElementById('e-note').value=s.note||'';
+    document.getElementById('e-placedDate').value=s.placedDate||'';
     const pa=toArr(s.placed);if(pa.length)pa.forEach(v=>addPlacedRow(v));else addPlacedRow('');
     const fa=toArr(s.finalPlace);if(fa.length)fa.forEach(v=>addFinalRow(v));else addFinalRow('');
   }else{
     document.getElementById('modal-title').textContent='➕ 新增學生資料';
     ['e-class','e-id','e-name','e-w1','e-w2','e-w3','e-form','e-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('e-placedDate').value=new Date().toISOString().slice(0,10);
     addPlacedRow('');addFinalRow('');
   }
   document.getElementById('edit-modal').classList.add('open');
@@ -452,7 +504,8 @@ async function saveModal(){
     placed:getMultiVals('placed-list'),
     finalPlace:getMultiVals('final-list'),
     confirmForm:document.getElementById('e-form').value.trim(),
-    note:document.getElementById('e-note').value.trim()
+    note:document.getElementById('e-note').value.trim(),
+    placedDate:document.getElementById('e-placedDate').value.trim()
   };
   if(idx!=='')CACHE[parseInt(idx)]=rec;else CACHE.push(rec);
   closeModal();

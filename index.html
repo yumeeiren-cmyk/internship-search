@@ -90,6 +90,8 @@ tr:hover td{background:var(--pbg);}
 .announce-form-btn{display:inline-block;padding:7px 16px;background:var(--b2);color:#fff;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;transition:background .2s;}
 .announce-form-btn:hover{background:#2563eb;}
 .announce-note{font-size:.76rem;color:#999;margin-top:8px;}
+.announce-date{font-size:.74rem;color:#aaa;margin-bottom:8px;}
+.announce-date span{font-weight:700;color:#888;}
 #expired-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(40,20,70,.92);align-items:center;justify-content:center;flex-direction:column;text-align:center;color:#fff;}
 #expired-overlay.show{display:flex;}
 #expired-overlay h2{font-size:1.4rem;margin-bottom:12px;}
@@ -117,8 +119,8 @@ tr:hover td{background:var(--pbg);}
 <div class="admin-link"><a href="admin.html">⚙️ 管理者後台</a></div>
 
 <div id="expired-overlay">
-  <h2>🔒 查詢期限已截止</h2>
-  <p>本系統開放查詢時間至 2026 年 7 月 31 日止。</p>
+  <h2>🔒 查詢系統暫時關閉</h2>
+  <p>本系統目前暫停開放查詢，請稍後再試。</p>
   <p style="margin-top:8px">如有疑問，請聯繫洪啟穎助理教授。</p>
 </div>
 
@@ -136,7 +138,8 @@ tr:hover td{background:var(--pbg);}
       <h2>🎉 錄取結果公告</h2>
       <p style="font-size:.83rem;color:#888;margin-bottom:16px">管理者陸續公告錄取資訊，請同學確認後點選 Google 表單填寫確認意願。</p>
       <div class="filter-row" style="margin-bottom:16px">
-        <input type="text" id="ann-search" placeholder="搜尋姓名或廠商…" oninput="renderAnnounce()"/>
+        <input type="text" id="ann-search" placeholder="搜尋姓名…" oninput="renderAnnounce()"/>
+        <input type="text" id="ann-company" placeholder="搜尋錄取廠商…" oninput="renderAnnounce()"/>
         <select id="ann-class" onchange="renderAnnounce()">
           <option value="">所有班級</option>
           <option value="時尚三真">時尚三真</option>
@@ -237,12 +240,6 @@ tr:hover td{background:var(--pbg);}
 </main>
 
 <script>
-// ── 到期檢查 ──
-(function(){
-  const d=new Date('2026-07-31T23:59:59+08:00');
-  if(new Date()>d)document.getElementById('expired-overlay').classList.add('show');
-})();
-
 // ══════════════════════════════════════════
 //  設定：Apps Script 網址
 //  ★ 請在 admin.html 的「系統設定」填入網址後，
@@ -270,6 +267,7 @@ async function loadData(){
     const json = await res.json();
     if(json.ok && Array.isArray(json.data)){
       DATA = json.data;
+      if(json.systemClosed) document.getElementById('expired-overlay').classList.add('show');
     } else {
       DATA = DEFAULT_STUDENTS;
     }
@@ -327,15 +325,28 @@ function switchTab(id,btn){
 
 function renderAnnounce(){
   const q=(document.getElementById('ann-search').value||'').toLowerCase();
+  const comp=(document.getElementById('ann-company').value||'').toLowerCase();
   const cls=document.getElementById('ann-class').value;
   const filter=document.getElementById('ann-filter').value;
   let list=DATA.filter(s=>{
     if(filter==='placed'&&toArr(s.placed).length===0)return false;
     if(filter==='final'&&toArr(s.finalPlace).length===0)return false;
     if(cls&&s.class!==cls)return false;
-    const placedStr=toArr(s.placed).join(' ');
-    if(q&&!s.name.toLowerCase().includes(q)&&!placedStr.toLowerCase().includes(q))return false;
+    if(q&&!s.name.toLowerCase().includes(q))return false;
+    if(comp){
+      const allPlaced=toArr(s.placed).concat(toArr(s.finalPlace)).join(' ').toLowerCase();
+      if(!allPlaced.includes(comp))return false;
+    }
     return true;
+  });
+  // 依公告日期由新到舊排序，無日期者排最後
+  list.sort((a,b)=>{
+    const da=a.placedDate||'';
+    const db=b.placedDate||'';
+    if(!da&&!db)return 0;
+    if(!da)return 1;
+    if(!db)return -1;
+    return db.localeCompare(da);
   });
   if(!list.length){
     document.getElementById('announce-area').innerHTML='<p class="announce-empty">目前無符合資料</p>';
@@ -349,6 +360,7 @@ function renderAnnounce(){
       return '<div class="announce-card">'+
         '<div class="announce-student">'+s.name+'</div>'+
         '<div class="announce-meta">'+s.class+'　學號：'+s.id+'</div>'+
+        (s.placedDate?'<div class="announce-date">📅 公告日期：<span>'+s.placedDate+'</span></div>':'')+
         (placedArr.length?placedArr.map(p=>'<div class="announce-placed">🏢 錄取：'+p+'</div>').join(''):'')+
         (finalArr.length?finalArr.map(p=>'<div class="announce-final">✅ 最終實習單位：'+p+'</div>').join(''):'')+
         (s.confirmForm?'<a class="announce-form-btn" href="'+s.confirmForm+'" target="_blank">📝 填寫確認意願表單</a>':'')+
