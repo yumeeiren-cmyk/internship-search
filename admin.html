@@ -132,6 +132,7 @@ tr:hover td{background:var(--pbg);}
     <button class="tab-btn active" onclick="aTab('students',this)">📋 學生管理</button>
     <button class="tab-btn" onclick="aTab('company',this)">🏢 廠商統計</button>
     <button class="tab-btn" onclick="aTab('settings',this)">⚙️ 系統設定</button>
+    <button class="tab-btn" onclick="aTab('jobs',this)">🏢 廠商職缺</button>
   </div>
 
   <div id="apanel-students" class="admin-panel">
@@ -223,6 +224,39 @@ tr:hover td{background:var(--pbg);}
       <input type="file" id="import-file2" accept=".json" style="display:none" onchange="importJSON(this)"/>
     </div>
   </div>
+
+  <!-- ══ 廠商職缺管理面板 ══ -->
+  <div id="apanel-jobs" class="admin-panel">
+    <div class="card">
+      <h2>廠商實習職缺管理</h2>
+      <div class="fbar">
+        <input type="text" id="j-keyword" placeholder="搜尋廠商名稱或品牌…" oninput="renderJobTable()"/>
+        <select id="j-category" onchange="renderJobTable()"><option value="">所有類別</option></select>
+        <select id="j-visible" onchange="renderJobTable()">
+          <option value="all">顯示狀態：全部</option>
+          <option value="true">前台顯示中</option>
+          <option value="false">已隱藏</option>
+        </select>
+        <button class="btn-act btn-add" onclick="openJobModal()">➕ 新增廠商</button>
+        <button class="btn-act btn-import" onclick="document.getElementById('import-company-csv').click()">📂 匯入表單 CSV</button>
+        <input type="file" id="import-company-csv" accept=".csv" style="display:none" onchange="importCompanyCSV(this)"/>
+      </div>
+      <div id="jobs-msg" class="msg" style="margin-bottom:10px"></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>公司品牌／名稱</th><th>服務類別</th><th>名額</th>
+            <th>薪資</th><th>工作內容（摘要）</th><th>前台顯示</th><th>操作</th>
+          </tr></thead>
+          <tbody id="jobs-tbody">
+            <tr><td colspan="7" class="loading"><span class="spinner"></span>載入中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  </div>
 </main>
 </div>
 
@@ -269,6 +303,53 @@ tr:hover td{background:var(--pbg);}
   </div>
 </div>
 <datalist id="company-list"></datalist>
+
+<!-- ══ 廠商職缺編輯 Modal ══ -->
+<div class="modal-overlay" id="job-modal">
+  <div class="modal-box" style="max-width:680px">
+    <h3 id="job-modal-title">🏢 新增 / 編輯廠商職缺</h3>
+    <input type="hidden" id="job-edit-idx"/>
+    <div style="font-size:.8rem;font-weight:700;color:var(--primary);margin:4px 0 10px;border-left:3px solid var(--primary);padding-left:8px">基本資訊</div>
+    <div class="form-grid">
+      <div class="form-g-modal"><label>公司名稱 *</label><input type="text" id="j-companyName"/></div>
+      <div class="form-g-modal"><label>公司品牌 *</label><input type="text" id="j-brand"/></div>
+      <div class="form-g-modal"><label>服務類別</label><input type="text" id="j-category-inp" placeholder="例：美容美體、婚紗攝影"/></div>
+      <div class="form-g-modal"><label>統一編號</label><input type="text" id="j-businessId"/></div>
+    </div>
+    <div style="font-size:.8rem;font-weight:700;color:var(--primary);margin:10px 0 10px;border-left:3px solid var(--primary);padding-left:8px">招募條件</div>
+    <div class="form-grid">
+      <div class="form-g-modal"><label>實習名額</label><input type="text" id="j-quota" placeholder="例：2~3 位"/></div>
+      <div class="form-g-modal"><label>學生身份</label><input type="text" id="j-employeeType" placeholder="例：正式員工"/></div>
+      <div class="form-g-modal full"><label>實習薪資</label><input type="text" id="j-salary" placeholder="例：依勞基法起薪 29500 元"/></div>
+      <div class="form-g-modal full"><label>休假方式</label><input type="text" id="j-vacation" placeholder="例：月休 8 天"/></div>
+      <div class="form-g-modal full"><label>工作時間</label><input type="text" id="j-workHours" placeholder="例：10:00~20:00，工時 8 小時"/></div>
+      <div class="form-g-modal full"><label>實習工作內容</label><textarea id="j-jobContent" rows="3"></textarea></div>
+      <div class="form-g-modal"><label>勞保健保</label><input type="text" id="j-insurance"/></div>
+      <div class="form-g-modal"><label>另簽工作合約</label><input type="text" id="j-extraContract"/></div>
+      <div class="form-g-modal"><label>支援他店活動</label><input type="text" id="j-supportOther" placeholder="是 / 否"/></div>
+      <div class="form-g-modal"><label>扣款處分</label><input type="text" id="j-deduction" placeholder="無 / 依勞基法"/></div>
+      <div class="form-g-modal full"><label>希望學生特質</label><textarea id="j-traits" rows="2"></textarea></div>
+      <div class="form-g-modal full"><label>其他注意事項</label><textarea id="j-notes" rows="2"></textarea></div>
+    </div>
+    <div style="font-size:.8rem;font-weight:700;color:var(--primary);margin:10px 0 10px;border-left:3px solid var(--primary);padding-left:8px">聯絡與其他資訊</div>
+    <div class="form-grid">
+      <div class="form-g-modal"><label>聯絡人姓名</label><input type="text" id="j-contactName"/></div>
+      <div class="form-g-modal"><label>聯絡人職稱</label><input type="text" id="j-contactTitle"/></div>
+      <div class="form-g-modal"><label>聯絡人電話</label><input type="text" id="j-contactPhone"/></div>
+      <div class="form-g-modal"><label>Line ID</label><input type="text" id="j-lineId"/></div>
+      <div class="form-g-modal full"><label>公司地址</label><input type="text" id="j-address"/></div>
+      <div class="form-g-modal"><label>公司電話</label><input type="text" id="j-companyPhone"/></div>
+      <div class="form-g-modal"><label>公司網址</label><input type="url" id="j-website" placeholder="https://"/></div>
+      <div class="form-g-modal full"><label>企業說明會入班日期</label><input type="text" id="j-demoDate"/></div>
+      <div class="form-g-modal full"><label>公司簡報連結</label><input type="url" id="j-presentationLink" placeholder="https://drive.google.com/…"/></div>
+      <div class="form-g-modal full"><label>空白履歷表連結</label><input type="url" id="j-resumeLink" placeholder="https://drive.google.com/…"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveJobModal()">💾 儲存</button>
+      <button class="btn-cancel" onclick="closeJobModal()">取消</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ══════════════════════════════════════════
@@ -587,6 +668,196 @@ function dateStr(){return new Date().toISOString().slice(0,10);}
 function now(){return new Date().toLocaleString('zh-TW',{hour12:false}).replace(/\//g,'-');}
 function showMsg(id,text,type){const el=document.getElementById(id);el.textContent=text;el.className='msg '+type;setTimeout(()=>el.className='msg',6000);}
 document.getElementById('edit-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('job-modal').addEventListener('click',function(e){if(e.target===this)closeJobModal();});
+
+// ══════════════════════════════════════════
+//  廠商職缺管理
+// ══════════════════════════════════════════
+let COMPANY_CACHE = [];
+
+// CSV 欄位對應（Google 表單欄位順序）
+const CSV_MAP = [
+  'timestamp','email','companyName','brand','category','businessId',
+  'contactName','contactTitle','contactPhone','lineId',
+  'address','companyPhone','website','quota','employeeType',
+  'jobContent','supportOther','insurance','extraContract',
+  'salary','vacation','workHours','deduction','demoDate',
+  'presentationLink','resumeLink','traits','notes'
+];
+
+async function fetchCompanies(){
+  const url = getApiUrl() + '?action=companies';
+  try{
+    const res  = await fetch(url);
+    const json = await res.json();
+    if(json.ok){ COMPANY_CACHE = json.data; return COMPANY_CACHE; }
+    showMsg('jobs-msg','讀取廠商失敗：'+json.error,'err'); return [];
+  }catch(ex){
+    showMsg('jobs-msg','連線失敗：'+ex.message,'err'); return [];
+  }
+}
+
+function renderJobTable(){
+  const kw  = document.getElementById('j-keyword').value.toLowerCase();
+  const cat = document.getElementById('j-category').value;
+  const vis = document.getElementById('j-visible').value;
+  COMPANY_CACHE.forEach((c,i) => c._idx = i);
+  const list = COMPANY_CACHE.filter(c => {
+    if(cat && c.category !== cat) return false;
+    if(vis === 'true'  && c.visible !== 'true')  return false;
+    if(vis === 'false' && c.visible === 'true')  return false;
+    if(kw && !c.companyName.toLowerCase().includes(kw) && !c.brand.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  document.getElementById('jobs-tbody').innerHTML = list.length
+    ? list.map(c => `<tr>
+        <td><strong>${c.brand||c.companyName}</strong><br><span style="font-size:.74rem;color:#888">${c.brand?c.companyName:''}</span></td>
+        <td><span class="badge b2">${c.category||'—'}</span></td>
+        <td>${c.quota||'—'}</td>
+        <td style="font-size:.78rem">${c.salary ? c.salary.slice(0,30)+(c.salary.length>30?'…':'') : '—'}</td>
+        <td style="font-size:.76rem;color:#666">${c.jobContent ? c.jobContent.slice(0,40)+(c.jobContent.length>40?'…':'') : '—'}</td>
+        <td>
+          <button class="btn-sm ${c.visible==='true'?'btn-export':'btn-del'}" onclick="toggleCompanyVisible(${c._idx})">
+            ${c.visible==='true'?'👁 顯示中':'🚫 已隱藏'}
+          </button>
+        </td>
+        <td>
+          <button class="btn-sm btn-edit" onclick="openJobModal(${c._idx})">✏️</button>
+          <button class="btn-sm btn-del"  onclick="delCompany(${c._idx})">🗑️</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px">查無廠商資料</td></tr>';
+  // 填充類別下拉
+  const cats = [...new Set(COMPANY_CACHE.map(c=>c.category).filter(Boolean))].sort();
+  const sel  = document.getElementById('j-category');
+  const cur  = sel.value;
+  sel.innerHTML = '<option value="">所有類別</option>' + cats.map(c=>`<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+}
+
+function openJobModal(idx){
+  document.getElementById('job-edit-idx').value = idx !== undefined ? idx : '';
+  const fields = ['companyName','brand','category-inp','businessId',
+    'quota','employeeType','salary','vacation','workHours','jobContent',
+    'insurance','extraContract','supportOther','deduction','traits','notes',
+    'contactName','contactTitle','contactPhone','lineId',
+    'address','companyPhone','website','demoDate','presentationLink','resumeLink'];
+  if(idx !== undefined){
+    document.getElementById('job-modal-title').textContent = '✏️ 編輯廠商職缺';
+    const c = COMPANY_CACHE[idx];
+    fields.forEach(f => {
+      const el = document.getElementById('j-'+f);
+      if(el) el.value = c[f.replace('-inp','')] || '';
+    });
+  } else {
+    document.getElementById('job-modal-title').textContent = '➕ 新增廠商職缺';
+    fields.forEach(f => { const el=document.getElementById('j-'+f); if(el) el.value=''; });
+  }
+  document.getElementById('job-modal').classList.add('open');
+}
+function closeJobModal(){ document.getElementById('job-modal').classList.remove('open'); }
+
+async function saveJobModal(){
+  const idx  = document.getElementById('job-edit-idx').value;
+  const name = document.getElementById('j-companyName').value.trim();
+  const brand= document.getElementById('j-brand').value.trim();
+  if(!name && !brand){ showMsg('jobs-msg','公司名稱或品牌為必填！','err'); closeJobModal(); return; }
+  const rec = {};
+  ['companyName','brand','businessId','quota','employeeType','salary','vacation','workHours',
+   'jobContent','insurance','extraContract','supportOther','deduction','traits','notes',
+   'contactName','contactTitle','contactPhone','lineId','address','companyPhone',
+   'website','demoDate','presentationLink','resumeLink'].forEach(f => {
+    rec[f] = (document.getElementById('j-'+f) || document.getElementById('j-'+f+'-inp') || {}).value?.trim() || '';
+  });
+  rec.category = document.getElementById('j-category-inp').value.trim();
+  rec.visible  = idx !== '' ? (COMPANY_CACHE[parseInt(idx)]?.visible || 'false') : 'false';
+  if(idx !== '') COMPANY_CACHE[parseInt(idx)] = Object.assign(COMPANY_CACHE[parseInt(idx)], rec);
+  else COMPANY_CACHE.push(rec);
+  closeJobModal();
+  showMsg('jobs-msg','⏳ 儲存中…','ok');
+  const res = await apiPost({ action:'save_company', company:rec, idx: idx!=='' ? parseInt(idx) : undefined });
+  if(res && res.ok) showMsg('jobs-msg','✅ 廠商資料已儲存','ok');
+  else showMsg('jobs-msg','⚠️ 儲存失敗：'+(res?res.error:'未知錯誤'),'err');
+  renderJobTable();
+}
+
+async function toggleCompanyVisible(idx){
+  const c = COMPANY_CACHE[idx];
+  c.visible = c.visible === 'true' ? 'false' : 'true';
+  const res = await apiPost({ action:'save_company', company:c, idx });
+  if(res && res.ok) showMsg('jobs-msg','✅ 顯示狀態已更新','ok');
+  else { c.visible = c.visible === 'true' ? 'false' : 'true'; showMsg('jobs-msg','⚠️ 更新失敗','err'); }
+  renderJobTable();
+}
+
+async function delCompany(idx){
+  if(!confirm('確定刪除此廠商？')) return;
+  COMPANY_CACHE.splice(idx, 1);
+  showMsg('jobs-msg','⏳ 刪除中…','ok');
+  const res = await apiPost({ action:'delete_company', idx });
+  if(res && res.ok) showMsg('jobs-msg','✅ 已刪除','ok');
+  else showMsg('jobs-msg','⚠️ 刪除失敗','err');
+  renderJobTable();
+}
+
+// CSV 解析器（支援引號內含逗號與換行）
+function parseCSV(text){
+  const rows=[];let row=[],field='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'&&text[i+1]==='"'){field+='"';i++;}
+      else if(c==='"'){inQ=false;}
+      else{field+=c;}
+    } else {
+      if(c==='"'){inQ=true;}
+      else if(c===','){row.push(field);field='';}
+      else if(c==='\n'){row.push(field);field='';if(row.some(f=>f!==''))rows.push(row);row=[];}
+      else if(c!=='\r'){field+=c;}
+    }
+  }
+  if(field||row.length){row.push(field);if(row.some(f=>f!==''))rows.push(row);}
+  return rows;
+}
+
+async function importCompanyCSV(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try{
+      const rows = parseCSV(e.target.result);
+      // 跳過標題列（可能因引號跨行而佔多列，找到第一筆含「@」的資料列）
+      const dataRows = rows.filter(r => r[1] && r[1].includes('@'));
+      if(!dataRows.length){ showMsg('jobs-msg','⚠️ CSV 中找不到廠商資料列（第2欄應為電子郵件）','err'); return; }
+      if(!confirm(`偵測到 ${dataRows.length} 筆廠商資料，確定匯入？（預設全部隱藏，請手動開啟顯示）`)) return;
+      const companies = dataRows.map((r,i) => {
+        const c = { visible:'false', id:'' };
+        CSV_MAP.forEach((f,j) => { c[f] = (r[j]||'').trim(); });
+        return c;
+      });
+      showMsg('jobs-msg','⏳ 匯入中…','ok');
+      const res = await apiPost({ action:'import_companies', companies });
+      if(res && res.ok){
+        showMsg('jobs-msg','✅ '+res.message,'ok');
+        const data = await fetchCompanies();
+        COMPANY_CACHE = data; renderJobTable();
+      } else {
+        showMsg('jobs-msg','⚠️ 匯入失敗：'+(res?res.error:'未知錯誤'),'err');
+      }
+    }catch(ex){ showMsg('jobs-msg','解析失敗：'+ex.message,'err'); }
+    input.value='';
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+// 覆寫 aTab 以支援廠商職缺頁籤
+const _origATab = aTab;
+function aTab(id, btn){
+  document.querySelectorAll('.admin-panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('apanel-'+id).style.display='block'; btn.classList.add('active');
+  if(id==='company') renderCompanyTab();
+  if(id==='jobs'){ fetchCompanies().then(()=>renderJobTable()); }
+}
 </script>
 </body>
 </html>
