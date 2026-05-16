@@ -150,6 +150,10 @@ tr:hover td{background:var(--pbg);}
           <option value="final">已確認最終實習</option>
           <option value="all">全部學生</option>
         </select>
+        <select id="ann-sort" onchange="renderAnnounce()">
+          <option value="newest">公告時間：最新優先</option>
+          <option value="oldest">公告時間：最舊優先</option>
+        </select>
       </div>
       <div id="announce-area"><div class="loading-box"><div class="spinner"></div><br>資料載入中，請稍候…</div></div>
     </div>
@@ -339,14 +343,15 @@ function renderAnnounce(){
     }
     return true;
   });
-  // 依公告日期由新到舊排序，無日期者排最後
+  // 依選擇的排序方式排列，無日期者永遠排最後
+  const sortMode=document.getElementById('ann-sort').value;
   list.sort((a,b)=>{
     const da=a.placedDate||'';
     const db=b.placedDate||'';
     if(!da&&!db)return 0;
     if(!da)return 1;
     if(!db)return -1;
-    return db.localeCompare(da);
+    return sortMode==='oldest' ? da.localeCompare(db) : db.localeCompare(da);
   });
   if(!list.length){
     document.getElementById('announce-area').innerHTML='<p class="announce-empty">目前無符合資料</p>';
