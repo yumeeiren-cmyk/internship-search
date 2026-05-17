@@ -86,8 +86,11 @@ tr:hover td{background:var(--pbg);}
 .announce-student{font-size:1.05rem;font-weight:800;color:#2d2d2d;margin-bottom:4px;}
 .announce-meta{font-size:.78rem;color:#888;margin-bottom:10px;}
 .announce-placed{font-size:.88rem;font-weight:700;color:var(--primary);background:var(--pbg);border-radius:8px;padding:7px 11px;margin-bottom:6px;}
-.announce-final{font-size:.85rem;font-weight:700;color:#059669;background:#ecfdf5;border-radius:8px;padding:6px 11px;margin-bottom:8px;}
-.announce-form-btn{display:inline-block;padding:7px 16px;background:var(--b2);color:#fff;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;transition:background .2s;}
+.announce-final{font-size:.85rem;font-weight:700;color:#059669;background:#ecfdf5;border-radius:8px;padding:6px 11px;margin-bottom:6px;}
+/* ✅ 新增：輔導老師顯示樣式（淡藍色底） */
+.announce-teacher{font-size:.82rem;font-weight:600;color:#1e40af;background:#dbeafe;border-radius:8px;padding:6px 11px;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.announce-teacher-label{font-size:.72rem;font-weight:700;color:#3b82f6;white-space:nowrap;}
+.announce-form-btn{display:inline-block;padding:7px 16px;background:var(--b2);color:#fff;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;transition:background .2s;margin-top:4px;}
 .announce-form-btn:hover{background:#2563eb;}
 .announce-note{font-size:.76rem;color:#999;margin-top:8px;}
 .announce-date{font-size:.74rem;color:#aaa;margin-bottom:8px;}
@@ -96,7 +99,6 @@ tr:hover td{background:var(--pbg);}
 #expired-overlay.show{display:flex;}
 #expired-overlay h2{font-size:1.4rem;margin-bottom:12px;}
 #expired-overlay p{font-size:.92rem;opacity:.8;}
-/* 載入中樣式 */
 .loading-box{text-align:center;padding:40px;color:#888;}
 .job-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
 .job-card{background:#fff;border-radius:14px;box-shadow:var(--sh);border-top:4px solid var(--primary);padding:20px;}
@@ -273,28 +275,15 @@ tr:hover td{background:var(--pbg);}
 </main>
 
 <script>
-// ══════════════════════════════════════════
-//  設定：Apps Script 網址
-//  ★ 請在 admin.html 的「系統設定」填入網址後，
-//    把同一個網址也貼到下方 SCRIPT_URL 變數
-// ══════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJxJYEE7m9x-74vv5vFsqKIEbTa_moLTZ6f0tFVJjopMOnuE7OLjlziR1irCS2Pigy7w/exec';   // ← 部署後在此填入網址，或由 localStorage 自動讀取
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJxJYEE7m9x-74vv5vFsqKIEbTa_moLTZ6f0tFVJjopMOnuE7OLjlziR1irCS2Pigy7w/exec';
 
-// 預設學生資料（離線備援，當 API 無法連線時使用）
 const DEFAULT_STUDENTS = [{"id": "41207206", "name": "文思涵", "class": "時尚三善", "timestamp": "2026-05-04 11:22", "wish1": "芙美玉貴人美醫集團", "wish2": "ViviDay美甲美睫", "wish3": "維格醫美集團", "placed": [], "finalPlace": [], "confirmForm": "", "note": ""}, {"id": "41207157", "name": "王心妤", "class": "時尚三真", "timestamp": "2026-05-03 20:53", "wish1": "群翊商行", "wish2": "一真為你攝影有限公司", "wish3": "唯逗國際有限公司", "placed": [], "finalPlace": [], "confirmForm": "", "note": ""}, {"id": "41207130", "name": "王君文", "class": "時尚三真", "timestamp": "2026-04-23 14:04", "wish1": "The Vale.Finest（最丘髮型有限公司）", "wish2": "群翊商行", "wish3": "Round2（朗貳集團）", "placed": [], "finalPlace": [], "confirmForm": "", "note": ""}, {"id": "41207158", "name": "王慧娜", "class": "時尚三真", "timestamp": "2026-04-30 22:25", "wish1": "一真為你攝影有限公司", "wish2": "ViviDay美甲美睫", "wish3": "伊林娛樂", "placed": [], "finalPlace": [], "confirmForm": "", "note": ""}, {"id": "41207117", "name": "朱孟涵", "class": "時尚三真", "timestamp": "2026-04-30 14:08", "wish1": "麗舍時尚婚紗", "wish2": "一真為你攝影有限公司", "wish3": "麗舍時尚婚紗", "placed": [], "finalPlace": [], "confirmForm": "", "note": ""}];
 
 let DATA = DEFAULT_STUDENTS;
 
-// ── 從 Google Sheets API 取得資料 ──
 async function loadData(){
-  // 優先使用 admin 設定的網址，其次用程式碼內的 SCRIPT_URL
   const url = localStorage.getItem('internship_api_url_115') || SCRIPT_URL;
-  if(!url){
-    // 沒有設定 API 網址 → 使用預設學生資料（只有志願序，無錄取資訊）
-    DATA = DEFAULT_STUDENTS;
-    finishLoad();
-    return;
-  }
+  if(!url){ DATA = DEFAULT_STUDENTS; finishLoad(); return; }
   try{
     const res  = await fetch(url);
     const json = await res.json();
@@ -304,9 +293,7 @@ async function loadData(){
     } else {
       DATA = DEFAULT_STUDENTS;
     }
-  }catch(e){
-    DATA = DEFAULT_STUDENTS;
-  }
+  }catch(e){ DATA = DEFAULT_STUDENTS; }
   finishLoad();
 }
 
@@ -350,12 +337,16 @@ function switchTab(id,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   btn.classList.add('active');
-  if(id==='company')renderCompanyTable();
-  if(id==='all')renderAllTable('all');
-  if(id==='chart')renderChart();
+  if(id==='company') renderCompanyTable();
+  if(id==='all')     renderAllTable('all');
+  if(id==='chart')   renderChart();
   if(id==='announce')renderAnnounce();
+  if(id==='jobs')    loadJobs();
 }
 
+// ══════════════════════════════════════════
+//  ✅ 錄取公告（含輔導老師）
+// ══════════════════════════════════════════
 function renderAnnounce(){
   const q=(document.getElementById('ann-search').value||'').toLowerCase();
   const comp=(document.getElementById('ann-company').value||'').toLowerCase();
@@ -372,14 +363,10 @@ function renderAnnounce(){
     }
     return true;
   });
-  // 依選擇的排序方式排列，無日期者永遠排最後
   const sortMode=document.getElementById('ann-sort').value;
   list.sort((a,b)=>{
-    const da=a.placedDate||'';
-    const db=b.placedDate||'';
-    if(!da&&!db)return 0;
-    if(!da)return 1;
-    if(!db)return -1;
+    const da=a.placedDate||'', db=b.placedDate||'';
+    if(!da&&!db)return 0; if(!da)return 1; if(!db)return -1;
     return sortMode==='oldest' ? da.localeCompare(db) : db.localeCompare(da);
   });
   if(!list.length){
@@ -391,12 +378,18 @@ function renderAnnounce(){
     list.map(s=>{
       const placedArr=toArr(s.placed);
       const finalArr=toArr(s.finalPlace);
+      // ✅ 輔導老師：只有最終實習地點有值時才顯示
+      const hasFinal = finalArr.length > 0;
+      const teacherHTML =
+        (hasFinal && s.teacher1 ? `<div class="announce-teacher"><span class="announce-teacher-label">📋 上學期輔導</span>${s.teacher1} 老師</div>` : '') +
+        (hasFinal && s.teacher2 ? `<div class="announce-teacher"><span class="announce-teacher-label">📋 下學期輔導</span>${s.teacher2} 老師</div>` : '');
       return '<div class="announce-card">'+
         '<div class="announce-student">'+s.name+'</div>'+
         '<div class="announce-meta">'+s.class+'　學號：'+s.id+'</div>'+
         (s.placedDate?'<div class="announce-date">📅 公告日期：<span>'+s.placedDate+'</span></div>':'')+
         (placedArr.length?placedArr.map(p=>'<div class="announce-placed">🏢 錄取：'+p+'</div>').join(''):'')+
         (finalArr.length?finalArr.map(p=>'<div class="announce-final">✅ 最終實習單位：'+p+'</div>').join(''):'')+
+        teacherHTML+
         (s.confirmForm?'<a class="announce-form-btn" href="'+s.confirmForm+'" target="_blank">📝 填寫確認意願表單</a>':'')+
         (s.note?'<div class="announce-note">備註：'+s.note+'</div>':'')+
         (!placedArr.length&&!finalArr.length?'<div style="color:#bbb;font-size:.82rem">尚未公告錄取結果</div>':'')+
@@ -430,18 +423,15 @@ function liveSearch(){
         '<div class="s-meta">填表：'+s.timestamp+'</div>'+
       '</div>'+
       '<div class="wishes">'+
-        '<div class="wish-item w1">'+
-          '<div class="wish-label">🥇 第一志願</div>'+
+        '<div class="wish-item w1"><div class="wish-label">🥇 第一志願</div>'+
           '<div class="wish-name">'+(s.wish1||'（未填）')+'</div>'+
           (s.wish1&&!s.wish1.startsWith('其他')?'<div class="wish-count">共 <span>'+c1.total+'</span> 人選填 · 第一志願 <span>'+c1.w1+'</span> 人</div>':'')+
         '</div>'+
-        '<div class="wish-item w2">'+
-          '<div class="wish-label">🥈 第二志願</div>'+
+        '<div class="wish-item w2"><div class="wish-label">🥈 第二志願</div>'+
           '<div class="wish-name">'+(s.wish2||'（未填）')+'</div>'+
           (s.wish2&&!s.wish2.startsWith('其他')?'<div class="wish-count">共 <span>'+c2.total+'</span> 人選填 · 第一志願 <span>'+c2.w1+'</span> 人</div>':'')+
         '</div>'+
-        '<div class="wish-item w3">'+
-          '<div class="wish-label">🥉 第三志願</div>'+
+        '<div class="wish-item w3"><div class="wish-label">🥉 第三志願</div>'+
           '<div class="wish-name">'+(s.wish3||'（未填）')+'</div>'+
           (s.wish3&&!s.wish3.startsWith('其他')?'<div class="wish-count">共 <span>'+c3.total+'</span> 人選填 · 第一志願 <span>'+c3.w1+'</span> 人</div>':'')+
         '</div>'+
@@ -623,21 +613,6 @@ function row(icon, label, val){
   return `<div class="job-row"><span class="job-label">${icon} ${label}</span><span class="job-val">${val}</span></div>`;
 }
 
-// 覆寫 switchTab 支援廠商頁籤
-const _origSwitch = switchTab;
-function switchTab(id, btn){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  btn.classList.add('active');
-  if(id==='company') renderCompanyTable();
-  if(id==='all')     renderAllTable('all');
-  if(id==='chart')   renderChart();
-  if(id==='announce')renderAnnounce();
-  if(id==='jobs')    loadJobs();
-}
-
-// ── 啟動：從 Google Sheets 載入資料 ──
 loadData();
 </script>
 </body>

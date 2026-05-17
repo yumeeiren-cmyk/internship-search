@@ -88,6 +88,12 @@ tr:hover td{background:var(--pbg);}
 .spinner{display:inline-block;width:20px;height:20px;border:3px solid #ddd;border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
 .settings-box{max-width:440px;}
+/* 輔導老師名單管理 */
+.teacher-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.teacher-row input{flex:1;padding:8px 11px;border:2px solid #ddd;border-radius:8px;font-size:.87rem;outline:none;transition:border .2s;font-family:inherit;}
+.teacher-row input:focus{border-color:var(--primary);}
+.teacher-badge{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:8px;padding:2px 8px;font-size:.75rem;font-weight:700;}
+.section-divider{grid-column:1/-1;border-top:1px dashed #ddd;margin:6px 0 4px;padding-top:10px;font-size:.8rem;font-weight:700;color:var(--primary);}
 </style>
 </head>
 <body>
@@ -135,6 +141,7 @@ tr:hover td{background:var(--pbg);}
     <button class="tab-btn" onclick="aTab('jobs',this)">🏢 廠商職缺</button>
   </div>
 
+  <!-- ══ 學生管理面板 ══ -->
   <div id="apanel-students" class="admin-panel">
     <div class="card">
       <h2>學生資料管理</h2>
@@ -162,16 +169,19 @@ tr:hover td{background:var(--pbg);}
           <thead><tr>
             <th>班級</th><th>學號</th><th>姓名</th>
             <th>第一志願</th><th>第二志願</th><th>第三志願</th>
-            <th>錄取單位</th><th>公告日期</th><th>最終實習地點</th><th>確認表單</th><th>備註</th><th>操作</th>
+            <th>錄取單位</th><th>公告日期</th><th>最終實習地點</th>
+            <th>上學期輔導</th><th>下學期輔導</th>
+            <th>確認表單</th><th>備註</th><th>操作</th>
           </tr></thead>
           <tbody id="student-tbody">
-            <tr><td colspan="12" class="loading"><span class="spinner"></span>載入中，請稍候…</td></tr>
+            <tr><td colspan="14" class="loading"><span class="spinner"></span>載入中，請稍候…</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
+  <!-- ══ 廠商統計面板 ══ -->
   <div id="apanel-company" class="admin-panel">
     <div class="card">
       <h2>廠商志願競爭與錄取統計</h2>
@@ -187,6 +197,7 @@ tr:hover td{background:var(--pbg);}
     </div>
   </div>
 
+  <!-- ══ 系統設定面板 ══ -->
   <div id="apanel-settings" class="admin-panel">
     <div class="card settings-box">
       <h2>🔒 前台開放狀態</h2>
@@ -197,6 +208,19 @@ tr:hover td{background:var(--pbg);}
       </div>
       <div id="sys-msg" class="msg"></div>
     </div>
+
+    <!-- ✅ 輔導老師名單管理 -->
+    <div class="card" style="max-width:520px">
+      <h2>👩‍🏫 輔導老師名單管理</h2>
+      <p style="font-size:.83rem;color:#666;margin-bottom:14px">新增或刪除系上專任老師，名單將出現在學生指派的下拉選單中。名單修改後請點「儲存名單」。</p>
+      <div id="teacher-list-mgr"></div>
+      <button class="btn-act btn-add" style="margin-top:10px;width:100%" onclick="addTeacherRow('')">➕ 新增老師</button>
+      <div style="margin-top:14px">
+        <button class="btn-act btn-export" onclick="saveTeachers()" style="width:100%">💾 儲存名單</button>
+      </div>
+      <div id="teacher-msg" class="msg" style="margin-top:10px"></div>
+    </div>
+
     <div class="card settings-box">
       <h2>🔗 Google Sheets 連線設定</h2>
       <p style="font-size:.83rem;color:#666;margin-bottom:8px">目前使用的 Apps Script 網址：</p>
@@ -256,10 +280,10 @@ tr:hover td{background:var(--pbg);}
     </div>
   </div>
 
-  </div>
 </main>
 </div>
 
+<!-- ══ 學生編輯 Modal ══ -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal-box">
     <h3 id="modal-title">✏️ 新增 / 編輯學生資料</h3>
@@ -289,6 +313,27 @@ tr:hover td{background:var(--pbg);}
         <div id="final-list"></div>
         <button type="button" class="btn-add-row" onclick="addFinalRow('')">＋ 新增最終實習地點</button>
       </div>
+
+      <!-- ✅ 輔導老師區塊（只在有最終實習地點時顯示） -->
+      <div class="section-divider" id="teacher-section-divider" style="display:none">
+        👨‍🏫 大四實習輔導老師指派（確認最終實習地點後方可指派）
+      </div>
+      <div class="form-g-modal" id="teacher-sec-1" style="display:none">
+        <label>上學期輔導老師</label>
+        <select id="e-teacher1">
+          <option value="">— 尚未指派 —</option>
+        </select>
+      </div>
+      <div class="form-g-modal" id="teacher-sec-2" style="display:none">
+        <label>下學期輔導老師</label>
+        <select id="e-teacher2">
+          <option value="">— 尚未指派 —</option>
+        </select>
+      </div>
+      <div class="form-g-modal full" id="teacher-sec-hint" style="display:none">
+        <div class="hint">若上下學期為同一位老師，兩欄填入相同姓名即可。</div>
+      </div>
+
       <div class="form-g-modal full">
         <label>📝 Google 表單連結</label>
         <input type="url" id="e-form" placeholder="https://forms.gle/..."/>
@@ -353,17 +398,81 @@ tr:hover td{background:var(--pbg);}
 
 <script>
 // ══════════════════════════════════════════
-//  ★ Script 網址已直接寫入，所有電腦都能使用
+//  常數 & 取值
 // ══════════════════════════════════════════
 const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJxJYEE7m9x-74vv5vFsqKIEbTa_moLTZ6f0tFVJjopMOnuE7OLjlziR1irCS2Pigy7w/exec';
-const API_URL_KEY = 'internship_api_url_115';
-const PW_KEY      = 'internship_admin_pw_115';
-const DEFAULT_PW  = 'fashion2026';
+const API_URL_KEY  = 'internship_api_url_115';
+const PW_KEY       = 'internship_admin_pw_115';
+const TEACHERS_KEY = 'internship_teachers_115';   // ✅ 輔導老師名單
+const DEFAULT_PW   = 'fashion2026';
 
-// localStorage 優先（允許手動更換），否則用預設網址
 function getApiUrl(){ return localStorage.getItem(API_URL_KEY) || DEFAULT_SCRIPT_URL; }
 function getAdminPw(){ return localStorage.getItem(PW_KEY) || DEFAULT_PW; }
 
+// ══════════════════════════════════════════
+//  ✅ 輔導老師名單管理
+// ══════════════════════════════════════════
+function getTeachers(){
+  try{ return JSON.parse(localStorage.getItem(TEACHERS_KEY)) || []; }catch(e){ return []; }
+}
+function setTeachers(list){ localStorage.setItem(TEACHERS_KEY, JSON.stringify(list)); }
+
+function renderTeacherMgr(){
+  const list = getTeachers();
+  const wrap = document.getElementById('teacher-list-mgr');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  // 若尚無名單，預設顯示 3 個空白欄位
+  const display = list.length ? list : ['','',''];
+  display.forEach(name => addTeacherRow(name));
+}
+
+function addTeacherRow(val){
+  const wrap = document.getElementById('teacher-list-mgr');
+  if(!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'teacher-row';
+  row.innerHTML = `<input type="text" placeholder="請輸入老師姓名" value="${val||''}"/>
+    <button type="button" class="btn-del-row" onclick="this.parentNode.remove()">✕</button>`;
+  wrap.appendChild(row);
+}
+
+function saveTeachers(){
+  const inputs = document.querySelectorAll('#teacher-list-mgr .teacher-row input');
+  const list = [...inputs].map(i=>i.value.trim()).filter(v=>v!=='');
+  if(!list.length){ showMsg('teacher-msg','請至少填入一位老師姓名','err'); return; }
+  setTeachers(list);
+  showMsg('teacher-msg','✅ 老師名單已儲存（共 '+list.length+' 位）','ok');
+  refreshTeacherSelects();
+}
+
+function refreshTeacherSelects(){
+  const list = getTeachers();
+  const opts = '<option value="">— 尚未指派 —</option>' +
+    list.map(t=>`<option value="${t}">${t}</option>`).join('');
+  ['e-teacher1','e-teacher2'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const cur = el.value;
+    el.innerHTML = opts;
+    if(cur) el.value = cur;
+  });
+}
+
+// 根據「最終實習地點」是否有填值，決定顯示輔導老師欄位
+function updateTeacherSectionVisibility(){
+  const vals = [...document.querySelectorAll('#final-list .multi-row input')]
+    .map(i=>i.value.trim()).filter(v=>v!=='');
+  const show = vals.length > 0;
+  ['teacher-section-divider','teacher-sec-1','teacher-sec-2','teacher-sec-hint'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = show ? '' : 'none';
+  });
+}
+
+// ══════════════════════════════════════════
+//  系統設定
+// ══════════════════════════════════════════
 function saveApiUrl(){
   const url = document.getElementById('api-url-input').value.trim();
   if(!url){ showMsg('api-msg','請輸入網址','err'); return; }
@@ -372,12 +481,16 @@ function saveApiUrl(){
   showMsg('api-msg','✅ 網址已更換並儲存！','ok');
 }
 
+// ══════════════════════════════════════════
+//  登入 / 登出
+// ══════════════════════════════════════════
 function doLogin(){
   const pw = document.getElementById('login-pw').value;
   if(pw === getAdminPw()){
     document.getElementById('page-login').style.display='none';
     document.getElementById('page-admin').style.display='block';
     document.getElementById('current-url-display').textContent = getApiUrl();
+    renderTeacherMgr();   // ✅ 登入後初始化老師名單 UI
     init();
   } else {
     const m = document.getElementById('login-msg');
@@ -405,6 +518,38 @@ function changePw(){
   ['pw-old','pw-new','pw-new2'].forEach(id=>document.getElementById(id).value='');
 }
 
+// ══════════════════════════════════════════
+//  前台開關
+// ══════════════════════════════════════════
+let _systemClosed = false;
+function updateSystemStatusUI(closed){
+  _systemClosed = closed;
+  const label = document.getElementById('sys-status-label');
+  const btn   = document.getElementById('sys-toggle-btn');
+  if(closed){
+    label.textContent='🔴 前台已關閉'; label.style.color='#dc2626';
+    btn.textContent='✅ 開放前台'; btn.style.background='#10b981';
+  } else {
+    label.textContent='🟢 前台開放中'; label.style.color='#059669';
+    btn.textContent='🔒 關閉前台'; btn.style.background='#dc2626';
+  }
+  btn.style.color='#fff';
+}
+async function toggleSystem(){
+  const next = !_systemClosed;
+  showMsg('sys-msg','⏳ 更新中…','ok');
+  const res = await apiPost({action:'set_setting', key:'systemClosed', value:next});
+  if(res&&res.ok){
+    updateSystemStatusUI(next);
+    showMsg('sys-msg',next?'✅ 前台已關閉，學生無法查詢':'✅ 前台已開放，學生可正常查詢','ok');
+  } else {
+    showMsg('sys-msg','⚠️ 更新失敗：'+(res?res.error:'未知錯誤'),'err');
+  }
+}
+
+// ══════════════════════════════════════════
+//  API
+// ══════════════════════════════════════════
 let CACHE=[];
 
 async function fetchData(){
@@ -420,39 +565,8 @@ async function fetchData(){
     showMsg('admin-msg','讀取失敗：'+json.error,'err'); return [];
   }catch(e){
     showMsg('admin-msg','無法連線 API：'+e.message,'err');
-    document.getElementById('student-tbody').innerHTML='<tr><td colspan="12" style="text-align:center;color:#dc2626;padding:20px">❌ 連線失敗，請確認網路連線</td></tr>';
+    document.getElementById('student-tbody').innerHTML='<tr><td colspan="14" style="text-align:center;color:#dc2626;padding:20px">❌ 連線失敗，請確認網路連線</td></tr>';
     return [];
-  }
-}
-
-let _systemClosed = false;
-function updateSystemStatusUI(closed){
-  _systemClosed = closed;
-  const label = document.getElementById('sys-status-label');
-  const btn   = document.getElementById('sys-toggle-btn');
-  if(closed){
-    label.textContent = '🔴 前台已關閉';
-    label.style.color = '#dc2626';
-    btn.textContent   = '✅ 開放前台';
-    btn.style.background = '#10b981';
-  } else {
-    label.textContent = '🟢 前台開放中';
-    label.style.color = '#059669';
-    btn.textContent   = '🔒 關閉前台';
-    btn.style.background = '#dc2626';
-  }
-  btn.style.color = '#fff';
-}
-
-async function toggleSystem(){
-  const next = !_systemClosed;
-  showMsg('sys-msg','⏳ 更新中…','ok');
-  const res = await apiPost({action:'set_setting', key:'systemClosed', value:next});
-  if(res && res.ok){
-    updateSystemStatusUI(next);
-    showMsg('sys-msg', next ? '✅ 前台已關閉，學生無法查詢' : '✅ 前台已開放，學生可正常查詢','ok');
-  } else {
-    showMsg('sys-msg','⚠️ 更新失敗：'+(res?res.error:'未知錯誤'),'err');
   }
 }
 
@@ -492,9 +606,13 @@ function aTab(id,btn){
   document.querySelectorAll('.admin-panel').forEach(p=>p.style.display='none');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('apanel-'+id).style.display='block'; btn.classList.add('active');
-  if(id==='company')renderCompanyTab();
+  if(id==='company') renderCompanyTab();
+  if(id==='jobs'){ fetchCompanies().then(()=>renderJobTable()); }
 }
 
+// ══════════════════════════════════════════
+//  學生表格
+// ══════════════════════════════════════════
 function renderTable(){
   const kw=document.getElementById('f-keyword').value.toLowerCase();
   const cls=document.getElementById('f-class').value;
@@ -518,6 +636,8 @@ function renderTable(){
         <td>${toArr(s.placed).length?toArr(s.placed).map(p=>`<span class="badge" style="background:#f0e6ff;color:var(--primary)">${p}</span>`).join(''):'<span style="color:#ccc">—</span>'}</td>
         <td style="font-size:.78rem;color:#666;white-space:nowrap">${s.placedDate||'<span style="color:#ccc">—</span>'}</td>
         <td>${toArr(s.finalPlace).length?toArr(s.finalPlace).map(p=>`<span class="badge" style="background:#d1fae5;color:#065f46">${p}</span>`).join(''):'<span style="color:#ccc">—</span>'}</td>
+        <td>${s.teacher1?`<span class="teacher-badge">📚 ${s.teacher1}</span>`:'<span style="color:#ccc">—</span>'}</td>
+        <td>${s.teacher2?`<span class="teacher-badge">📚 ${s.teacher2}</span>`:'<span style="color:#ccc">—</span>'}</td>
         <td>${s.confirmForm?`<a href="${s.confirmForm}" target="_blank" style="color:var(--b2);font-size:.75rem">🔗 連結</a>`:'<span style="color:#ccc">—</span>'}</td>
         <td style="font-size:.78rem;color:#888">${s.note||''}</td>
         <td>
@@ -525,9 +645,12 @@ function renderTable(){
           <button class="btn-sm btn-del" onclick="delStudent(${s._idx})">🗑️</button>
         </td>
       </tr>`).join('')
-    :'<tr><td colspan="12" style="text-align:center;color:#aaa;padding:20px">查無資料</td></tr>';
+    :'<tr><td colspan="14" style="text-align:center;color:#aaa;padding:20px">查無資料</td></tr>';
 }
 
+// ══════════════════════════════════════════
+//  Modal 操作
+// ══════════════════════════════════════════
 function addPlacedRow(val){
   const row=document.createElement('div');row.className='multi-row';
   row.innerHTML=`<input type="text" list="company-list" placeholder="廠商名稱" value="${val||''}"/><button type="button" class="btn-del-row" onclick="this.parentNode.remove()">✕</button>`;
@@ -535,8 +658,10 @@ function addPlacedRow(val){
 }
 function addFinalRow(val){
   const row=document.createElement('div');row.className='multi-row';
-  row.innerHTML=`<input type="text" list="company-list" placeholder="最終實習地點" value="${val||''}"/><button type="button" class="btn-del-row" onclick="this.parentNode.remove()">✕</button>`;
+  // 刪除時同步更新輔導老師欄位可見性
+  row.innerHTML=`<input type="text" list="company-list" placeholder="最終實習地點" value="${val||''}" oninput="updateTeacherSectionVisibility()"/><button type="button" class="btn-del-row" onclick="this.parentNode.remove();updateTeacherSectionVisibility()">✕</button>`;
   document.getElementById('final-list').appendChild(row);
+  updateTeacherSectionVisibility();
 }
 function getMultiVals(id){
   return[...document.querySelectorAll('#'+id+' .multi-row input')].map(i=>i.value.trim()).filter(v=>v!=='');
@@ -546,6 +671,8 @@ function openModal(idx){
   document.getElementById('edit-idx').value=idx!==undefined?idx:'';
   document.getElementById('placed-list').innerHTML='';
   document.getElementById('final-list').innerHTML='';
+  refreshTeacherSelects();   // ✅ 每次開 Modal 更新老師下拉
+
   if(idx!==undefined){
     const s=CACHE[idx];
     document.getElementById('modal-title').textContent='✏️ 編輯學生資料';
@@ -558,14 +685,17 @@ function openModal(idx){
     document.getElementById('e-form').value=s.confirmForm||'';
     document.getElementById('e-note').value=s.note||'';
     document.getElementById('e-placedDate').value=s.placedDate||'';
+    document.getElementById('e-teacher1').value=s.teacher1||'';
+    document.getElementById('e-teacher2').value=s.teacher2||'';
     const pa=toArr(s.placed);if(pa.length)pa.forEach(v=>addPlacedRow(v));else addPlacedRow('');
     const fa=toArr(s.finalPlace);if(fa.length)fa.forEach(v=>addFinalRow(v));else addFinalRow('');
   }else{
     document.getElementById('modal-title').textContent='➕ 新增學生資料';
-    ['e-class','e-id','e-name','e-w1','e-w2','e-w3','e-form','e-note'].forEach(id=>document.getElementById(id).value='');
+    ['e-class','e-id','e-name','e-w1','e-w2','e-w3','e-form','e-note','e-teacher1','e-teacher2'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('e-placedDate').value=new Date().toISOString().slice(0,10);
     addPlacedRow('');addFinalRow('');
   }
+  updateTeacherSectionVisibility();   // ✅ 開 Modal 時依最終地點決定顯示
   document.getElementById('edit-modal').classList.add('open');
 }
 function closeModal(){document.getElementById('edit-modal').classList.remove('open');}
@@ -585,6 +715,8 @@ async function saveModal(){
     placed:getMultiVals('placed-list'),
     finalPlace:getMultiVals('final-list'),
     confirmForm:document.getElementById('e-form').value.trim(),
+    teacher1:document.getElementById('e-teacher1').value.trim(),   // ✅
+    teacher2:document.getElementById('e-teacher2').value.trim(),   // ✅
     note:document.getElementById('e-note').value.trim(),
     placedDate:document.getElementById('e-placedDate').value.trim()
   };
@@ -636,8 +768,10 @@ function buildDatalist(){
 }
 
 function exportCSV(){
-  const hdr=['班級','學號','姓名','第一志願','第二志願','第三志願','錄取單位','最終實習地點','確認表單','備註'];
-  const rows=CACHE.map(s=>[s.class,s.id,s.name,s.wish1,s.wish2,s.wish3,toArr(s.placed).join('；'),toArr(s.finalPlace).join('；'),s.confirmForm,s.note]);
+  const hdr=['班級','學號','姓名','第一志願','第二志願','第三志願','錄取單位','最終實習地點','上學期輔導老師','下學期輔導老師','確認表單','備註'];
+  const rows=CACHE.map(s=>[s.class,s.id,s.name,s.wish1,s.wish2,s.wish3,
+    toArr(s.placed).join('；'),toArr(s.finalPlace).join('；'),
+    s.teacher1||'',s.teacher2||'',s.confirmForm,s.note]);
   const csv='﻿'+[hdr,...rows].map(r=>r.map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
   dl(new Blob([csv],{type:'text/csv;charset=utf-8;'}),'實習媒合管理報表.csv');
 }
@@ -675,7 +809,6 @@ document.getElementById('job-modal').addEventListener('click',function(e){if(e.t
 // ══════════════════════════════════════════
 let COMPANY_CACHE = [];
 
-// CSV 欄位對應（Google 表單欄位順序）
 const CSV_MAP = [
   'timestamp','email','companyName','brand','category','businessId',
   'contactName','contactTitle','contactPhone','lineId',
@@ -727,7 +860,6 @@ function renderJobTable(){
         </td>
       </tr>`).join('')
     : '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px">查無廠商資料</td></tr>';
-  // 填充類別下拉
   const cats = [...new Set(COMPANY_CACHE.map(c=>c.category).filter(Boolean))].sort();
   const sel  = document.getElementById('j-category');
   const cur  = sel.value;
@@ -799,7 +931,6 @@ async function delCompany(idx){
   renderJobTable();
 }
 
-// CSV 解析器（支援引號內含逗號與換行）
 function parseCSV(text){
   const rows=[];let row=[],field='',inQ=false;
   for(let i=0;i<text.length;i++){
@@ -825,7 +956,6 @@ async function importCompanyCSV(input){
   reader.onload = async e => {
     try{
       const rows = parseCSV(e.target.result);
-      // 跳過標題列（可能因引號跨行而佔多列，找到第一筆含「@」的資料列）
       const dataRows = rows.filter(r => r[1] && r[1].includes('@'));
       if(!dataRows.length){ showMsg('jobs-msg','⚠️ CSV 中找不到廠商資料列（第2欄應為電子郵件）','err'); return; }
       if(!confirm(`偵測到 ${dataRows.length} 筆廠商資料，確定匯入？（預設全部隱藏，請手動開啟顯示）`)) return;
@@ -847,16 +977,6 @@ async function importCompanyCSV(input){
     input.value='';
   };
   reader.readAsText(file,'utf-8');
-}
-
-// 覆寫 aTab 以支援廠商職缺頁籤
-const _origATab = aTab;
-function aTab(id, btn){
-  document.querySelectorAll('.admin-panel').forEach(p=>p.style.display='none');
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('apanel-'+id).style.display='block'; btn.classList.add('active');
-  if(id==='company') renderCompanyTab();
-  if(id==='jobs'){ fetchCompanies().then(()=>renderJobTable()); }
 }
 </script>
 </body>
