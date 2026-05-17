@@ -115,6 +115,15 @@ tr:hover td{background:var(--pbg);}
 .job-link-btn:hover{background:#ede9fe;}
 .spinner{display:inline-block;width:28px;height:28px;border:3px solid #ddd;border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px;}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* ✅ 輔導老師查詢結果樣式 */
+.teacher-result-summary{background:linear-gradient(90deg,var(--primary),var(--pl));color:#fff;border-radius:10px;padding:13px 18px;margin-bottom:16px;font-weight:700;font-size:.93rem;}
+.teacher-result-table{width:100%;border-collapse:collapse;font-size:.85rem;}
+.teacher-result-table th{background:var(--primary);color:#fff;padding:9px 12px;text-align:left;white-space:nowrap;}
+.teacher-result-table td{padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+.teacher-result-table tr:last-child td{border-bottom:none;}
+.teacher-result-table tr:hover td{background:var(--pbg);}
+.t-badge-self{display:inline-block;background:#fde8f0;color:#be185d;border-radius:6px;padding:1px 7px;font-size:.72rem;font-weight:700;margin-left:4px;}
+.t-badge-other{display:inline-block;background:#f3f4f6;color:#6b7280;border-radius:6px;padding:1px 7px;font-size:.72rem;font-weight:700;margin-left:4px;}
 @media(max-width:600px){.bar-label{width:120px;}header h1{font-size:1.05rem;}.s-name{font-size:1rem;}}
 </style>
 </head>
@@ -143,6 +152,7 @@ tr:hover td{background:var(--pbg);}
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('announce',this)">📢 錄取公告</button>
     <button class="tab-btn" onclick="switchTab('search',this)">🔍 志願序查詢</button>
+    <button class="tab-btn" onclick="switchTab('teacher',this)">👩‍🏫 輔導老師查詢</button>
     <button class="tab-btn" onclick="switchTab('company',this)">🏢 廠商競爭統計</button>
     <button class="tab-btn" onclick="switchTab('all',this)">📋 全班志願總覽</button>
     <button class="tab-btn" onclick="switchTab('chart',this)">📊 志願排行圖表</button>
@@ -188,6 +198,22 @@ tr:hover td{background:var(--pbg);}
         <button class="btn-search" onclick="liveSearch()">查詢</button>
       </div>
       <div id="student-result"><p style="color:#aaa;text-align:center;padding:30px">請輸入姓名或學號開始查詢</p></div>
+    </div>
+  </div>
+
+  <!-- ✅ 輔導老師查詢 panel -->
+  <div id="panel-teacher" class="panel">
+    <div class="card">
+      <h2>👩‍🏫 依輔導老師查詢輔導學生名單</h2>
+      <p style="font-size:.83rem;color:#888;margin-bottom:16px">選擇老師後，顯示該老師所輔導的所有已確認實習學生。</p>
+      <div class="search-wrap" style="margin-bottom:18px">
+        <select id="t-teacher-sel" onchange="renderTeacherResult()" style="flex:1;min-width:200px">
+          <option value="">— 請選擇輔導老師 —</option>
+        </select>
+      </div>
+      <div id="teacher-query-result">
+        <p style="color:#aaa;text-align:center;padding:30px">請選擇輔導老師以查看輔導學生名單</p>
+      </div>
     </div>
   </div>
 
@@ -342,6 +368,7 @@ function switchTab(id,btn){
   if(id==='chart')   renderChart();
   if(id==='announce')renderAnnounce();
   if(id==='jobs')    loadJobs();
+  if(id==='teacher') buildTeacherSelect();  // ✅
 }
 
 // ══════════════════════════════════════════
@@ -611,6 +638,89 @@ function renderJobCards(){
 function row(icon, label, val){
   if(!val) return '';
   return `<div class="job-row"><span class="job-label">${icon} ${label}</span><span class="job-val">${val}</span></div>`;
+}
+
+// ══════════════════════════════════════════
+//  ✅ 輔導老師查詢
+// ══════════════════════════════════════════
+
+// 從 API 資料動態收集所有不重複老師名單，並填入下拉選單
+function buildTeacherSelect(){
+  const sel = document.getElementById('t-teacher-sel');
+  if(!sel) return;
+  const cur = sel.value;
+  // 收集 teacher1 + teacher2 中所有不重複非空值
+  const teacherSet = new Set();
+  DATA.forEach(s=>{
+    if(s.teacher1 && s.teacher1.trim()) teacherSet.add(s.teacher1.trim());
+    if(s.teacher2 && s.teacher2.trim()) teacherSet.add(s.teacher2.trim());
+  });
+  const teachers = [...teacherSet].sort();
+  if(!teachers.length){
+    sel.innerHTML = '<option value="">— 目前尚無輔導資料 —</option>';
+    document.getElementById('teacher-query-result').innerHTML =
+      '<p style="color:#aaa;text-align:center;padding:30px">目前尚無輔導資料，請待管理者指派輔導老師後再查詢。</p>';
+    return;
+  }
+  sel.innerHTML = '<option value="">— 請選擇輔導老師 —</option>' +
+    teachers.map(t=>`<option value="${t}">${t} 老師</option>`).join('');
+  if(cur) sel.value = cur;
+  // 若已有選擇，直接更新結果
+  if(sel.value) renderTeacherResult();
+  else document.getElementById('teacher-query-result').innerHTML =
+    '<p style="color:#aaa;text-align:center;padding:30px">請選擇輔導老師以查看輔導學生名單</p>';
+}
+
+// 顯示所選老師的輔導學生清單
+function renderTeacherResult(){
+  const teacher = document.getElementById('t-teacher-sel').value;
+  const el = document.getElementById('teacher-query-result');
+  if(!teacher){
+    el.innerHTML = '<p style="color:#aaa;text-align:center;padding:30px">請選擇輔導老師以查看輔導學生名單</p>';
+    return;
+  }
+  // 篩選：有最終實習地點，且 teacher1 或 teacher2 符合
+  const list = DATA.filter(s =>
+    toArr(s.finalPlace).length > 0 &&
+    (s.teacher1 === teacher || s.teacher2 === teacher)
+  );
+  if(!list.length){
+    el.innerHTML = `<p style="color:#aaa;text-align:center;padding:30px">
+      ${teacher} 老師目前尚無輔導學生（或學生尚未確認最終實習地點）</p>`;
+    return;
+  }
+  // 上學期、下學期各自統計
+  const sem1 = list.filter(s=>s.teacher1===teacher).length;
+  const sem2 = list.filter(s=>s.teacher2===teacher).length;
+  el.innerHTML =
+    `<div class="teacher-result-summary">
+      👩‍🏫 ${teacher} 老師共輔導 ${list.length} 位同學
+      &nbsp;｜&nbsp; 上學期 ${sem1} 人&nbsp;｜&nbsp; 下學期 ${sem2} 人
+    </div>` +
+    `<div style="overflow-x:auto"><table class="teacher-result-table">
+      <thead><tr>
+        <th>班級</th><th>學號</th><th>姓名</th><th>最終實習地點</th>
+        <th>上學期輔導</th><th>下學期輔導</th>
+      </tr></thead>
+      <tbody>` +
+    list.map(s=>{
+      const finals = toArr(s.finalPlace).join('、') || '—';
+      const t1html = s.teacher1
+        ? `${s.teacher1}${s.teacher1===teacher ? '<span class="t-badge-self">本人</span>' : '<span class="t-badge-other">他人</span>'}`
+        : '<span style="color:#ccc">—</span>';
+      const t2html = s.teacher2
+        ? `${s.teacher2}${s.teacher2===teacher ? '<span class="t-badge-self">本人</span>' : '<span class="t-badge-other">他人</span>'}`
+        : '<span style="color:#ccc">—</span>';
+      return `<tr>
+        <td>${s.class}</td>
+        <td>${s.id}</td>
+        <td style="font-weight:700">${s.name}</td>
+        <td><span class="badge" style="background:#d1fae5;color:#065f46">${finals}</span></td>
+        <td>${t1html}</td>
+        <td>${t2html}</td>
+      </tr>`;
+    }).join('') +
+    '</tbody></table></div>';
 }
 
 loadData();

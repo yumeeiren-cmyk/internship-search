@@ -146,17 +146,20 @@ tr:hover td{background:var(--pbg);}
     <div class="card">
       <h2>學生資料管理</h2>
       <div class="fbar">
-        <input type="text" id="f-keyword" placeholder="搜尋姓名或學號…"/>
-        <select id="f-class">
+        <input type="text" id="f-keyword" placeholder="搜尋姓名或學號…" oninput="renderTable()"/>
+        <select id="f-class" onchange="renderTable()">
           <option value="">所有班級</option>
           <option value="時尚三真">時尚三真</option>
           <option value="時尚三善">時尚三善</option>
         </select>
-        <select id="f-status">
+        <select id="f-status" onchange="renderTable()">
           <option value="all">所有狀態</option>
           <option value="placed">已公告錄取</option>
           <option value="final">已確認最終</option>
           <option value="unplaced">尚未錄取</option>
+        </select>
+        <select id="filter-teacher" onchange="renderTable()">
+          <option value="">— 全部老師 —</option>
         </select>
         <button class="btn-act btn-filter" onclick="renderTable()">🔍 篩選</button>
         <button class="btn-act btn-add" onclick="openModal()">➕ 新增學生</button>
@@ -164,6 +167,7 @@ tr:hover td{background:var(--pbg);}
         <button class="btn-act btn-import" onclick="document.getElementById('import-file').click()">📂 匯入備份</button>
         <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)"/>
       </div>
+      <div id="filter-result-hint" style="font-size:.82rem;color:#888;margin-bottom:8px;padding:0 2px"></div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
@@ -444,6 +448,7 @@ function saveTeachers(){
   setTeachers(list);
   showMsg('teacher-msg','✅ 老師名單已儲存（共 '+list.length+' 位）','ok');
   refreshTeacherSelects();
+  refreshTeacherFilter();  // ✅ 同步更新篩選下拉
 }
 
 function refreshTeacherSelects(){
@@ -574,7 +579,9 @@ async function apiPost(payload){
 
 async function init(){
   const data = await fetchData();
-  CACHE=data; updateStats(data); renderTable(); buildDatalist();
+  CACHE=data; updateStats(data);
+  refreshTeacherFilter();  // ✅ 登入後更新老師篩選下拉
+  renderTable(); buildDatalist();
 }
 
 function toArr(v){
@@ -605,10 +612,22 @@ function aTab(id,btn){
 // ══════════════════════════════════════════
 //  學生表格
 // ══════════════════════════════════════════
+// ✅ 更新篩選老師下拉選單（從 localStorage 老師名單動態產生）
+function refreshTeacherFilter(){
+  const list = getTeachers();
+  const sel  = document.getElementById('filter-teacher');
+  if(!sel) return;
+  const cur  = sel.value;
+  sel.innerHTML = '<option value="">— 全部老師 —</option>' +
+    list.map(t=>`<option value="${t}">${t} 老師</option>`).join('');
+  if(cur) sel.value = cur;
+}
+
 function renderTable(){
-  const kw=document.getElementById('f-keyword').value.toLowerCase();
-  const cls=document.getElementById('f-class').value;
-  const st=document.getElementById('f-status').value;
+  const kw      = document.getElementById('f-keyword').value.toLowerCase();
+  const cls     = document.getElementById('f-class').value;
+  const st      = document.getElementById('f-status').value;
+  const teacher = document.getElementById('filter-teacher').value;
   CACHE.forEach((s,i)=>s._idx=i);
   const filtered=CACHE.filter(s=>{
     if(cls&&s.class!==cls)return false;
@@ -616,8 +635,17 @@ function renderTable(){
     if(st==='final'&&toArr(s.finalPlace).length===0)return false;
     if(st==='unplaced'&&toArr(s.placed).length>0)return false;
     if(kw&&!s.name.toLowerCase().includes(kw)&&!s.id.toLowerCase().includes(kw))return false;
+    // ✅ 輔導老師篩選：teacher1 或 teacher2 其中一欄符合即顯示
+    if(teacher && s.teacher1 !== teacher && s.teacher2 !== teacher) return false;
     return true;
   });
+  // ✅ 顯示篩選結果筆數
+  const hint = document.getElementById('filter-result-hint');
+  if(hint){
+    const teacherLabel = teacher ? `　👩‍🏫 輔導老師：${teacher}` : '';
+    hint.textContent = `目前篩選結果共 ${filtered.length} 筆${teacherLabel}`;
+    hint.style.color = filtered.length === 0 ? '#dc2626' : '#888';
+  }
   document.getElementById('student-tbody').innerHTML=filtered.length
     ?filtered.map(s=>`<tr>
         <td>${s.class}</td><td>${s.id}</td>
