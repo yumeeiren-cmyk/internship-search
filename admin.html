@@ -314,24 +314,24 @@ tr:hover td{background:var(--pbg);}
         <button type="button" class="btn-add-row" onclick="addFinalRow('')">＋ 新增最終實習地點</button>
       </div>
 
-      <!-- ✅ 輔導老師區塊（只在有最終實習地點時顯示） -->
-      <div class="section-divider" id="teacher-section-divider" style="display:none">
-        👨‍🏫 大四實習輔導老師指派（確認最終實習地點後方可指派）
+      <!-- ✅ 輔導老師區塊（永遠顯示） -->
+      <div class="section-divider" id="teacher-section-divider">
+        👨‍🏫 大四實習輔導老師指派
       </div>
-      <div class="form-g-modal" id="teacher-sec-1" style="display:none">
+      <div class="form-g-modal" id="teacher-sec-1">
         <label>上學期輔導老師</label>
         <select id="e-teacher1">
           <option value="">— 尚未指派 —</option>
         </select>
       </div>
-      <div class="form-g-modal" id="teacher-sec-2" style="display:none">
+      <div class="form-g-modal" id="teacher-sec-2">
         <label>下學期輔導老師</label>
         <select id="e-teacher2">
           <option value="">— 尚未指派 —</option>
         </select>
       </div>
-      <div class="form-g-modal full" id="teacher-sec-hint" style="display:none">
-        <div class="hint">若上下學期為同一位老師，兩欄填入相同姓名即可。</div>
+      <div class="form-g-modal full" id="teacher-sec-hint">
+        <div class="hint">若上下學期為同一位老師，兩欄填入相同姓名即可。老師名單請至「系統設定」→「輔導老師名單管理」新增。</div>
       </div>
 
       <div class="form-g-modal full">
@@ -459,16 +459,8 @@ function refreshTeacherSelects(){
   });
 }
 
-// 根據「最終實習地點」是否有填值，決定顯示輔導老師欄位
-function updateTeacherSectionVisibility(){
-  const vals = [...document.querySelectorAll('#final-list .multi-row input')]
-    .map(i=>i.value.trim()).filter(v=>v!=='');
-  const show = vals.length > 0;
-  ['teacher-section-divider','teacher-sec-1','teacher-sec-2','teacher-sec-hint'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.style.display = show ? '' : 'none';
-  });
-}
+// 輔導老師欄位永遠顯示，此函式保留以防其他地方呼叫
+function updateTeacherSectionVisibility(){ /* 已改為永遠顯示，無需判斷 */ }
 
 // ══════════════════════════════════════════
 //  系統設定
